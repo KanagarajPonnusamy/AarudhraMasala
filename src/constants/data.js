@@ -1,3 +1,7 @@
+/**
+ * Created by: Kanagaraj P
+ * Created on: 01-03-2026
+ */
 export const CATEGORIES = [
   { id: '1', name: 'Masala Powders', icon: 'https://aishwaryamoils.com/cdn/shop/files/Chilli_Powder_1.jpg?v=1737530090&width=300' },
   { id: '2', name: 'Oils', icon: 'https://aishwaryamoils.com/cdn/shop/files/Coconut_Oil_1.jpg?v=1737530216&width=300' },

@@ -1,3 +1,7 @@
+/**
+ * Created by: Kanagaraj P
+ * Created on: 01-03-2026
+ */
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
 import { useTheme } from '../context/ThemeContext';

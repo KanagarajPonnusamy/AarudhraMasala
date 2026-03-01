@@ -1,3 +1,7 @@
+/**
+ * Created by: Kanagaraj P
+ * Created on: 01-03-2026
+ */
 export const COMMON = {
   primary: '#108474',
   primaryDark: '#0a6358',

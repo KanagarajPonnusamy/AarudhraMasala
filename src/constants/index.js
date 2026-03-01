@@ -1,3 +1,7 @@
+/**
+ * Created by: Kanagaraj P
+ * Created on: 01-03-2026
+ */
 export { LIGHT_THEME, DARK_THEME, COMMON, SIZES } from './theme';
 export {
   CATEGORIES,

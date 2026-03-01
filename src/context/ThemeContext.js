@@ -1,3 +1,7 @@
+/**
+ * Created by: Kanagaraj P
+ * Created on: 01-03-2026
+ */
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import { LIGHT_THEME, DARK_THEME } from '../constants/theme';
 

@@ -1,3 +1,7 @@
+/**
+ * Created by: Kanagaraj P
+ * Created on: 01-03-2026
+ */
 import 'react-native-gesture-handler';
 import React, { useCallback } from 'react';
 import { Text, TextInput } from 'react-native';
