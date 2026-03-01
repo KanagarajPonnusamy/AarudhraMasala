@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(npx create-expo-app@latest:*)",
+      "WebFetch(domain:aishwaryamoils.com)",
+      "Bash(npx expo install:*)",
+      "Bash(npm install:*)",
+      "Bash(ls:*)",
+      "Bash(npx expo export:*)",
+      "Bash(npx expo start:*)",
+      "Bash(npm run web:*)",
+      "Bash(xcrun simctl:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(kill:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)"
+    ]
+  }
+}
