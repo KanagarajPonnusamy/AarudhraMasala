@@ -9,6 +9,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import CartScreen from '../screens/CartScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
+import OrderSuccessScreen from '../screens/OrderSuccessScreen';
+import MyOrdersScreen from '../screens/MyOrdersScreen';
 import CustomDrawer from '../components/CustomDrawer';
 import { useTheme } from '../context/ThemeContext';
 
@@ -49,6 +53,26 @@ export default function AppNavigator() {
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="Cart"
+          component={CartScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="Checkout"
+          component={CheckoutScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="OrderSuccess"
+          component={OrderSuccessScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="MyOrders"
+          component={MyOrdersScreen}
           options={{ animation: 'slide_from_right' }}
         />
       </Stack.Navigator>

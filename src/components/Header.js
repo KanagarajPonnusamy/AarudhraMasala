@@ -6,10 +6,12 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useCart } from '../context/CartContext';
 import { SIZES } from '../constants/theme';
 
 export default function Header({ navigation }) {
   const { theme } = useTheme();
+  const { cartCount } = useCart();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
@@ -27,11 +29,18 @@ export default function Header({ navigation }) {
           <TouchableOpacity style={styles.iconBtn}>
             <Feather name="heart" size={22} color={theme.text} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn}>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => navigation.getParent()?.navigate('Cart')}
+          >
             <Feather name="shopping-cart" size={22} color={theme.text} />
-            <View style={[styles.cartBadge, { backgroundColor: theme.badge }]}>
-              <Text style={styles.cartBadgeText}>2</Text>
-            </View>
+            {cartCount > 0 && (
+              <View style={[styles.cartBadge, { backgroundColor: theme.badge }]}>
+                <Text style={styles.cartBadgeText}>
+                  {cartCount > 99 ? '99+' : cartCount}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>

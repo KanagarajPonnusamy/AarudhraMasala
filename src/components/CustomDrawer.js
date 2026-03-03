@@ -28,8 +28,9 @@ export default function CustomDrawer({ navigation }) {
     : 'A';
 
   const handleNavigation = (item) => {
-    if (item.screen === 'HomeScreen') {
-      navigation.closeDrawer();
+    navigation.closeDrawer();
+    if (item.screen !== 'HomeScreen') {
+      navigation.getParent()?.navigate(item.screen);
     }
   };
 
@@ -79,12 +80,6 @@ export default function CustomDrawer({ navigation }) {
                 styles.menuItem,
                 isHome && {
                   backgroundColor: theme.isDark ? 'rgba(16,132,116,0.15)' : '#E8F5F1',
-                },
-                index === 8 && {
-                  marginTop: 8,
-                  borderTopWidth: 1,
-                  borderTopColor: theme.border,
-                  paddingTop: 16,
                 },
               ]}
               onPress={() => handleNavigation(item)}

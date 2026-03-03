@@ -68,6 +68,7 @@ export const FEATURED_PRODUCTS = [
     image: 'https://aishwaryamoils.com/cdn/shop/files/Chilli_Powder_1.jpg?v=1737530090&width=400',
     category: 'Masala Powders',
     badge: 'Bestseller',
+    productcode: 'AARUDHRA0000001',
   },
   {
     id: '2',
@@ -80,6 +81,7 @@ export const FEATURED_PRODUCTS = [
     image: 'https://aishwaryamoils.com/cdn/shop/files/Coconut_Oil_1.jpg?v=1737530216&width=400',
     category: 'Oils',
     badge: 'Popular',
+    productcode: 'AARUDHRA0000002',
   },
   {
     id: '3',
@@ -92,6 +94,7 @@ export const FEATURED_PRODUCTS = [
     image: 'https://aishwaryamoils.com/cdn/shop/files/Buffalo_Ghee.jpg?v=1737530156&width=400',
     category: 'Ghee',
     badge: null,
+    productcode: 'AARUDHRA0000003',
   },
   {
     id: '4',
@@ -104,6 +107,7 @@ export const FEATURED_PRODUCTS = [
     image: 'https://aishwaryamoils.com/cdn/shop/files/Almond_Oil_35060ea5-a910-49d1-9317-f63628a241a0.jpg?v=1737530119&width=400',
     category: 'Oils',
     badge: 'New',
+    productcode: 'AARUDHRA0000004',
   },
 ];
 
@@ -118,6 +122,7 @@ export const BEST_SELLERS = [
     reviews: 215,
     image: 'https://aishwaryamoils.com/cdn/shop/files/Cashew.jpg?v=1737530195&width=400',
     category: 'Snacks',
+    productcode: 'AARUDHRA0000005',
   },
   {
     id: '6',
@@ -129,6 +134,7 @@ export const BEST_SELLERS = [
     reviews: 67,
     image: 'https://aishwaryamoils.com/cdn/shop/files/Black-Kavuni-Rice-600x600.jpg?v=1737530178&width=400',
     category: 'Millets & Rice',
+    productcode: 'AARUDHRA0000006',
   },
   {
     id: '7',
@@ -140,6 +146,7 @@ export const BEST_SELLERS = [
     reviews: 156,
     image: 'https://aishwaryamoils.com/cdn/shop/files/Virgin_Coconut_Oil_9a205c9f-4cb9-4a97-b73f-d12d6729dd6a.jpg?v=1737530302&width=400',
     category: 'Oils',
+    productcode: 'AARUDHRA0000007',
   },
   {
     id: '8',
@@ -151,6 +158,7 @@ export const BEST_SELLERS = [
     reviews: 48,
     image: 'https://aishwaryamoils.com/cdn/shop/files/Charcoal_Soap.jpg?v=1737530198&width=400',
     category: 'Skin & Hair Care',
+    productcode: 'AARUDHRA0000008',
   },
   {
     id: '9',
@@ -162,6 +170,7 @@ export const BEST_SELLERS = [
     reviews: 32,
     image: 'https://aishwaryamoils.com/cdn/shop/files/Beetroot_Malt_1.jpg?v=1737530149&width=400',
     category: 'Traditional Foods',
+    productcode: 'AARUDHRA0000009',
   },
   {
     id: '10',
@@ -173,20 +182,12 @@ export const BEST_SELLERS = [
     reviews: 73,
     image: 'https://aishwaryamoils.com/cdn/shop/files/Black_Raisin_1.jpg?v=1737530170&width=400',
     category: 'Snacks',
+    productcode: 'AARUDHRA0000010',
   },
 ];
 
 export const DRAWER_MENU_ITEMS = [
   { id: '1', label: 'Home', icon: 'home', screen: 'HomeScreen' },
-  { id: '2', label: 'Shop All', icon: 'grid', screen: 'ShopAll' },
-  { id: '3', label: 'Masala Powders', icon: 'sun', screen: 'Category' },
-  { id: '4', label: 'Oils & Ghee', icon: 'droplet', screen: 'Category' },
-  { id: '5', label: 'Traditional Foods', icon: 'coffee', screen: 'Category' },
-  { id: '6', label: 'Millets & Rice', icon: 'package', screen: 'Category' },
-  { id: '7', label: 'Pickles & Podi', icon: 'archive', screen: 'Category' },
-  { id: '8', label: 'Skin & Hair Care', icon: 'heart', screen: 'Category' },
-  { id: '9', label: 'Value Packs', icon: 'gift', screen: 'ValuePacks' },
-  { id: '10', label: 'Our Story', icon: 'book-open', screen: 'OurStory' },
-  { id: '11', label: 'Contact Us', icon: 'phone', screen: 'Contact' },
-  { id: '12', label: 'Track Order', icon: 'truck', screen: 'TrackOrder' },
+  { id: '2', label: 'Cart', icon: 'shopping-cart', screen: 'Cart' },
+  { id: '3', label: 'My Orders', icon: 'package', screen: 'MyOrders' },
 ];

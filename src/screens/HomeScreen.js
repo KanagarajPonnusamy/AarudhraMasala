@@ -40,6 +40,7 @@ export default function HomeScreen({ navigation }) {
             image: p.producturl,
             category: p.productcategory || '',
             badge: null,
+            productcode: p.productcode || '',
           }));
           setProducts(mapped);
         }

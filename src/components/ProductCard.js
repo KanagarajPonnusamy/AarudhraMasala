@@ -6,11 +6,22 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useCart } from '../context/CartContext';
 import { SIZES } from '../constants/theme';
 
 export default function ProductCard({ product, style }) {
   const { theme } = useTheme();
+  const { addToCart, removeFromCart, isInCart } = useCart();
   const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+  const inCart = isInCart(product.id);
+
+  const handleCartPress = () => {
+    if (inCart) {
+      removeFromCart(product.id);
+    } else {
+      addToCart(product);
+    }
+  };
 
   return (
     <TouchableOpacity
@@ -56,9 +67,28 @@ export default function ProductCard({ product, style }) {
           )}
         </View>
 
-        <TouchableOpacity style={[styles.addBtn, { borderColor: theme.primary }]}>
-          <Feather name="shopping-cart" size={14} color={theme.primary} />
-          <Text style={[styles.addBtnText, { color: theme.primary }]}>Add to Cart</Text>
+        <TouchableOpacity
+          onPress={handleCartPress}
+          style={[
+            styles.addBtn,
+            inCart
+              ? { borderColor: theme.accent, backgroundColor: theme.accent }
+              : { borderColor: theme.primary, backgroundColor: 'transparent' },
+          ]}
+        >
+          <Feather
+            name={inCart ? 'x-circle' : 'shopping-cart'}
+            size={14}
+            color={inCart ? '#FFF' : theme.primary}
+          />
+          <Text
+            style={[
+              styles.addBtnText,
+              { color: inCart ? '#FFF' : theme.primary },
+            ]}
+          >
+            {inCart ? 'Remove' : 'Add to Cart'}
+          </Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -179,7 +209,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1.5,
-    backgroundColor: 'transparent',
   },
   addBtnText: {
     fontSize: 13,

@@ -16,6 +16,7 @@ export default function AuthInput({
   secureTextEntry,
   keyboardType = 'default',
   autoCapitalize = 'none',
+  editable,
   error,
 }) {
   const { theme } = useTheme();
@@ -50,7 +51,7 @@ export default function AuthInput({
           style={styles.icon}
         />
         <TextInput
-          style={[styles.input, { color: theme.text }]}
+          style={[styles.input, { color: editable === false ? theme.textSecondary : theme.text }]}
           placeholder={placeholder}
           placeholderTextColor={theme.textSecondary}
           value={value}
@@ -58,6 +59,7 @@ export default function AuthInput({
           secureTextEntry={isPassword && !showPassword}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
+          editable={editable}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
         />
