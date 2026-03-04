@@ -3,7 +3,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 const PORT = 3001;
-const TARGET = 'http://www.aarudhramasala.com';
+const TARGET = 'https://www.aarudhramasala.com';
 
 // Allow all origins for local dev
 app.use((req, res, next) => {

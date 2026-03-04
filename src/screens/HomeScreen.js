@@ -88,6 +88,9 @@ export default function HomeScreen({ navigation }) {
           <Text style={[styles.footerText, { color: theme.textSecondary }]}>
             Quality you can taste, purity you can trust.
           </Text>
+          <Text style={[styles.copyright, { color: theme.textSecondary }]}>
+            {'\u00A9'} 2026 Aarudhra Masala. All Rights Reserved.
+          </Text>
         </View>
       </ScrollView>
     </View>
@@ -124,5 +127,10 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     marginTop: 2,
+  },
+  copyright: {
+    fontSize: 11,
+    marginTop: 12,
+    fontWeight: '500',
   },
 });

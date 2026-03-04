@@ -191,4 +191,5 @@ export const DRAWER_MENU_ITEMS = [
   { id: '2', label: 'Favourites', icon: 'heart', screen: 'Favourites' },
   { id: '3', label: 'Cart', icon: 'shopping-cart', screen: 'Cart' },
   { id: '4', label: 'My Orders', icon: 'package', screen: 'MyOrders' },
+  { id: '5', label: 'About Us', icon: 'info', screen: 'About' },
 ];

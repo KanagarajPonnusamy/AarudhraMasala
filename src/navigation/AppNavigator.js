@@ -15,6 +15,7 @@ import OrderSuccessScreen from '../screens/OrderSuccessScreen';
 import MyOrdersScreen from '../screens/MyOrdersScreen';
 import SearchScreen from '../screens/SearchScreen';
 import FavouritesScreen from '../screens/FavouritesScreen';
+import AboutScreen from '../screens/AboutScreen';
 import CustomDrawer from '../components/CustomDrawer';
 import WebContainer from '../components/WebContainer';
 import { useTheme } from '../context/ThemeContext';
@@ -89,6 +90,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="Favourites"
             component={FavouritesScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="About"
+            component={AboutScreen}
             options={{ animation: 'slide_from_right' }}
           />
         </Stack.Navigator>
