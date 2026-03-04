@@ -7,13 +7,16 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useCart } from '../context/CartContext';
+import { useFavourites } from '../context/FavouriteContext';
 import { SIZES } from '../constants/theme';
 
 export default function ProductCard({ product, style }) {
   const { theme } = useTheme();
   const { addToCart, removeFromCart, isInCart } = useCart();
+  const { toggleFavourite, isFavourite } = useFavourites();
   const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
   const inCart = isInCart(product.id);
+  const liked = isFavourite(product.id);
 
   const handleCartPress = () => {
     if (inCart) {
@@ -40,8 +43,11 @@ export default function ProductCard({ product, style }) {
             <Text style={styles.discountText}>-{discount}%</Text>
           </View>
         )}
-        <TouchableOpacity style={[styles.wishlistBtn, { backgroundColor: theme.surface }]}>
-          <Feather name="heart" size={16} color={theme.textSecondary} />
+        <TouchableOpacity
+          style={[styles.wishlistBtn, { backgroundColor: liked ? theme.accent : theme.surface }]}
+          onPress={() => toggleFavourite(product)}
+        >
+          <Feather name="heart" size={16} color={liked ? '#FFF' : theme.textSecondary} />
         </TouchableOpacity>
       </View>
 

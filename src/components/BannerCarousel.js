@@ -22,7 +22,10 @@ const SWIPE_THRESHOLD = 0.15; // 15% of card width to trigger next/prev
 
 export default function BannerCarousel() {
   const { theme } = useTheme();
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: rawScreenWidth } = useWindowDimensions();
+  const screenWidth = Platform.OS === 'web' && rawScreenWidth > SIZES.maxWidth
+    ? SIZES.maxWidth
+    : rawScreenWidth;
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef(null);
   const initialIndex = 2; // start at 3rd item (0-based)

@@ -75,10 +75,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   categoryImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    resizeMode: 'contain',
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   categoryName: {
     fontSize: 12,

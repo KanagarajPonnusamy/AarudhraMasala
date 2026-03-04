@@ -49,4 +49,5 @@ export const SIZES = {
   padding: 16,
   radius: 12,
   iconSize: 24,
+  maxWidth: 1200,
 };

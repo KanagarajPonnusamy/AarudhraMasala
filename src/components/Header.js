@@ -3,7 +3,7 @@
  * Created on: 01-03-2026
  */
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useCart } from '../context/CartContext';
@@ -15,43 +15,35 @@ export default function Header({ navigation }) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
-      <View style={styles.topRow}>
-        <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.iconBtn}>
-          <Feather name="menu" size={24} color={theme.text} />
-        </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.iconBtn}>
+        <Feather name="menu" size={24} color={theme.text} />
+      </TouchableOpacity>
 
-        <View style={styles.logoContainer}>
-          <Text style={[styles.logoText, { color: theme.primary }]}>Aarudhra</Text>
-          <Text style={[styles.logoSubText, { color: theme.text }]}>MASALA</Text>
-        </View>
-
-        <View style={styles.rightIcons}>
-          <TouchableOpacity style={styles.iconBtn}>
-            <Feather name="heart" size={22} color={theme.text} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconBtn}
-            onPress={() => navigation.getParent()?.navigate('Cart')}
-          >
-            <Feather name="shopping-cart" size={22} color={theme.text} />
-            {cartCount > 0 && (
-              <View style={[styles.cartBadge, { backgroundColor: theme.badge }]}>
-                <Text style={styles.cartBadgeText}>
-                  {cartCount > 99 ? '99+' : cartCount}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
+      <View style={styles.logoContainer}>
+        <Text style={[styles.logoText, { color: theme.primary }]}>Aarudhra</Text>
+        <Text style={[styles.logoSubText, { color: theme.text }]}>MASALA</Text>
       </View>
 
-      <View style={[styles.searchBar, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-        <Feather name="search" size={18} color={theme.textSecondary} />
-        <TextInput
-          placeholder="Search masalas, oils, ghee..."
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.searchInput, { color: theme.text }]}
-        />
+      <View style={styles.rightIcons}>
+        <TouchableOpacity
+          style={styles.iconBtn}
+          onPress={() => navigation.getParent()?.navigate('Search')}
+        >
+          <Feather name="search" size={22} color={theme.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconBtn}
+          onPress={() => navigation.getParent()?.navigate('Cart')}
+        >
+          <Feather name="shopping-cart" size={22} color={theme.text} />
+          {cartCount > 0 && (
+            <View style={[styles.cartBadge, { backgroundColor: theme.badge }]}>
+              <Text style={styles.cartBadgeText}>
+                {cartCount > 99 ? '99+' : cartCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -63,12 +55,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SIZES.padding,
     paddingBottom: 12,
     borderBottomWidth: 1,
-  },
-  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
   },
   iconBtn: {
     padding: 4,
@@ -112,20 +101,5 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 10,
     fontWeight: '700',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    padding: 0,
-    outlineStyle: 'none',
   },
 });

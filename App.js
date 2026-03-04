@@ -12,6 +12,7 @@ import { ThemeProvider } from './src/context/ThemeContext';
 import { AuthProvider } from './src/context/AuthContext';
 import { CartProvider } from './src/context/CartContext';
 import { OrderProvider } from './src/context/OrderContext';
+import { FavouriteProvider } from './src/context/FavouriteContext';
 import AppNavigator from './src/navigation/AppNavigator';
 
 SplashScreen.preventAutoHideAsync();
@@ -46,11 +47,13 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <AuthProvider>
         <CartProvider>
-          <OrderProvider>
-            <ThemeProvider>
-              <AppNavigator />
-            </ThemeProvider>
-          </OrderProvider>
+          <FavouriteProvider>
+            <OrderProvider>
+              <ThemeProvider>
+                <AppNavigator />
+              </ThemeProvider>
+            </OrderProvider>
+          </FavouriteProvider>
         </CartProvider>
       </AuthProvider>
     </GestureHandlerRootView>

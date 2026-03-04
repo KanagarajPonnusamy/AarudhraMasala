@@ -11,6 +11,8 @@ import {
   ScrollView,
   Switch,
 } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { useDrawerProgress } from '@react-navigation/drawer';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
@@ -21,6 +23,11 @@ export default function CustomDrawer({ navigation }) {
   const { theme, isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
+  const progress = useDrawerProgress();
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+  }));
 
   const isLoggedIn = !!user;
   const initials = isLoggedIn
@@ -40,7 +47,7 @@ export default function CustomDrawer({ navigation }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.drawerBg, paddingTop: insets.top }]}>
+    <Animated.View style={[styles.container, { backgroundColor: theme.drawerBg, paddingTop: insets.top }, animatedStyle]}>
       {/* Header / Profile */}
       <View style={[styles.header, { borderBottomColor: theme.border }]}>
         <View style={[styles.avatarContainer, { backgroundColor: theme.primary }]}>
@@ -138,7 +145,7 @@ export default function CustomDrawer({ navigation }) {
           </TouchableOpacity>
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

@@ -19,7 +19,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import AuthInput from '../components/AuthInput';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation, route }) {
   const { theme } = useTheme();
   const { login } = useAuth();
 
@@ -61,7 +61,14 @@ export default function LoginScreen({ navigation }) {
     try {
       await login(form.email, form.password);
       setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
-      setTimeout(() => navigation.goBack(), 1000);
+      const returnTo = route.params?.returnTo;
+      setTimeout(() => {
+        if (returnTo) {
+          navigation.replace(returnTo);
+        } else {
+          navigation.goBack();
+        }
+      }, 1000);
     } catch (e) {
       const errMsg =
         e.response?.data?.message ||

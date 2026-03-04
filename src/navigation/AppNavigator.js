@@ -13,7 +13,10 @@ import CartScreen from '../screens/CartScreen';
 import CheckoutScreen from '../screens/CheckoutScreen';
 import OrderSuccessScreen from '../screens/OrderSuccessScreen';
 import MyOrdersScreen from '../screens/MyOrdersScreen';
+import SearchScreen from '../screens/SearchScreen';
+import FavouritesScreen from '../screens/FavouritesScreen';
 import CustomDrawer from '../components/CustomDrawer';
+import WebContainer from '../components/WebContainer';
 import { useTheme } from '../context/ThemeContext';
 
 const Drawer = createDrawerNavigator();
@@ -41,41 +44,55 @@ function DrawerNavigator() {
 }
 
 export default function AppNavigator() {
+  const { theme } = useTheme();
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Main" component={DrawerNavigator} />
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ animation: 'slide_from_bottom' }}
-        />
-        <Stack.Screen
-          name="Register"
-          component={RegisterScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="Cart"
-          component={CartScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="Checkout"
-          component={CheckoutScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="OrderSuccess"
-          component={OrderSuccessScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="MyOrders"
-          component={MyOrdersScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <WebContainer style={{ backgroundColor: theme.background }}>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Main" component={DrawerNavigator} />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="Register"
+            component={RegisterScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="Cart"
+            component={CartScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="Checkout"
+            component={CheckoutScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="OrderSuccess"
+            component={OrderSuccessScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="MyOrders"
+            component={MyOrdersScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="Search"
+            component={SearchScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="Favourites"
+            component={FavouritesScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </WebContainer>
   );
 }

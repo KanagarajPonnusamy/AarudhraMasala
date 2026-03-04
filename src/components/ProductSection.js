@@ -3,7 +3,7 @@
  * Created on: 01-03-2026
  */
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { SIZES } from '../constants/theme';
 import ProductCard from './ProductCard';
@@ -14,8 +14,11 @@ export default function ProductSection({ title, products }) {
   const { theme } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
 
-  const columns = screenWidth >= 768 ? 4 : 2;
-  const availableWidth = screenWidth - SIZES.padding * 2;
+  const containerWidth = Platform.OS === 'web' && screenWidth > SIZES.maxWidth
+    ? SIZES.maxWidth
+    : screenWidth;
+  const columns = containerWidth >= 768 ? 4 : 2;
+  const availableWidth = containerWidth - SIZES.padding * 2;
   const cardWidth = (availableWidth - GAP * (columns - 1)) / columns;
 
   return (

@@ -13,10 +13,11 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import LottieView from 'lottie-react-native';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { SIZES } from '../constants/theme';
+import EmptyState from '../components/EmptyState';
 
 function CartItem({ item, theme, updateQuantity, removeFromCart }) {
   return (
@@ -80,8 +81,17 @@ function CartItem({ item, theme, updateQuantity, removeFromCart }) {
 
 export default function CartScreen({ navigation }) {
   const { theme } = useTheme();
+  const { user } = useAuth();
   const { cartItems, cartTotal, cartCount, updateQuantity, removeFromCart } =
     useCart();
+
+  const handleCheckout = () => {
+    if (user) {
+      navigation.navigate('Checkout');
+    } else {
+      navigation.navigate('Login', { returnTo: 'Checkout' });
+    }
+  };
 
   const renderItem = ({ item }) => (
     <CartItem
@@ -93,92 +103,79 @@ export default function CartScreen({ navigation }) {
   );
 
   const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <LottieView
-        source={require('../../assets/animations/empty-cart.json')}
-        autoPlay
-        loop
-        style={styles.lottie}
-      />
-      <Text style={[styles.emptyTitle, { color: theme.text }]}>
-        Your cart is empty
-      </Text>
-      <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-        Add some products to get started
-      </Text>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={[styles.shopBtn, { backgroundColor: theme.primary }]}
-      >
-        <Text style={styles.shopBtnText}>Continue Shopping</Text>
-      </TouchableOpacity>
-    </View>
+    <EmptyState
+      icon="shopping-cart"
+      title="Your cart is empty"
+      subtitle="Add some products to get started"
+      buttonText="Continue Shopping"
+      onPress={() => navigation.goBack()}
+    />
   );
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
-        ]}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-        >
-          <Feather name="arrow-left" size={24} color={theme.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
-          My Cart ({cartCount})
-        </Text>
-        <View style={{ width: 32 }} />
-      </View>
-
-      {/* Cart List */}
-      <FlatList
-        data={cartItems}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={
-          cartItems.length === 0 ? styles.emptyList : styles.listContent
-        }
-        ListEmptyComponent={renderEmpty}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {/* Order Summary Footer */}
-      {cartItems.length > 0 && (
+        {/* Header */}
         <View
           style={[
-            styles.footer,
-            {
-              backgroundColor: theme.card,
-              borderTopColor: theme.border,
-              shadowColor: theme.shadowColor,
-            },
+            styles.header,
+            { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
           ]}
         >
-          <View style={styles.totalRow}>
-            <Text style={[styles.totalLabel, { color: theme.textSecondary }]}>
-              Total ({cartCount} {cartCount === 1 ? 'item' : 'items'})
-            </Text>
-            <Text style={[styles.totalAmount, { color: theme.primary }]}>
-              ₹{cartTotal}
-            </Text>
-          </View>
           <TouchableOpacity
-            style={[styles.checkoutBtn, { backgroundColor: theme.primary }]}
-            onPress={() => navigation.navigate('Checkout')}
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
           >
-            <Feather name="check-circle" size={18} color="#FFF" />
-            <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+            <Feather name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            My Cart ({cartCount})
+          </Text>
+          <View style={{ width: 32 }} />
         </View>
-      )}
+
+        {/* Cart List */}
+        <FlatList
+          data={cartItems}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={
+            cartItems.length === 0 ? styles.emptyList : styles.listContent
+          }
+          ListEmptyComponent={renderEmpty}
+          showsVerticalScrollIndicator={false}
+        />
+
+        {/* Order Summary Footer */}
+        {cartItems.length > 0 && (
+          <View
+            style={[
+              styles.footer,
+              {
+                backgroundColor: theme.card,
+                borderTopColor: theme.border,
+                shadowColor: theme.shadowColor,
+              },
+            ]}
+          >
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, { color: theme.textSecondary }]}>
+                Total ({cartCount} {cartCount === 1 ? 'item' : 'items'})
+              </Text>
+              <Text style={[styles.totalAmount, { color: theme.primary }]}>
+                ₹{cartTotal}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.checkoutBtn, { backgroundColor: theme.primary }]}
+              onPress={handleCheckout}
+            >
+              <Feather name="check-circle" size={18} color="#FFF" />
+              <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+            </TouchableOpacity>
+          </View>
+        )}
     </SafeAreaView>
   );
 }
@@ -276,37 +273,6 @@ const styles = StyleSheet.create({
   subtotal: {
     fontSize: 13,
     fontWeight: '500',
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
-    gap: 12,
-  },
-  lottie: {
-    width: 200,
-    height: 200,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  shopBtn: {
-    marginTop: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  shopBtnText: {
-    color: '#FFF',
-    fontSize: 15,
-    fontWeight: '700',
   },
   footer: {
     padding: SIZES.padding,

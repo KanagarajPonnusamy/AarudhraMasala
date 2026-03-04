@@ -29,6 +29,7 @@ export default function CheckoutScreen({ navigation }) {
   const [street1, setStreet1] = useState('');
   const [street2, setStreet2] = useState('');
   const [pincode, setPincode] = useState('');
+  const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [country, setCountry] = useState('');
   const [pincodeLoading, setPincodeLoading] = useState(false);
@@ -39,6 +40,7 @@ export default function CheckoutScreen({ navigation }) {
     if (pincode.length === 6) {
       fetchPincodeDetails(pincode);
     } else {
+      setCity('');
       setState('');
       setCountry('');
       setPincodeAutoFilled(false);
@@ -54,17 +56,20 @@ export default function CheckoutScreen({ navigation }) {
       const data = await response.json();
       if (data[0]?.Status === 'Success' && data[0]?.PostOffice?.length > 0) {
         const postOffice = data[0].PostOffice[0];
+        setCity(postOffice.District || '');
         setState(postOffice.State || '');
         setCountry(postOffice.Country || '');
         setPincodeAutoFilled(true);
-        setErrors((prev) => ({ ...prev, pincode: null, state: null, country: null }));
+        setErrors((prev) => ({ ...prev, pincode: null, city: null, state: null, country: null }));
       } else {
+        setCity('');
         setState('');
         setCountry('');
         setPincodeAutoFilled(false);
         setErrors((prev) => ({ ...prev, pincode: 'Invalid pincode' }));
       }
     } catch {
+      setCity('');
       setState('');
       setCountry('');
       setPincodeAutoFilled(false);
@@ -80,6 +85,7 @@ export default function CheckoutScreen({ navigation }) {
     if (!street1.trim()) newErrors.street1 = 'Street 1 is required';
     if (!pincode.trim()) newErrors.pincode = 'Pincode is required';
     else if (pincode.length !== 6) newErrors.pincode = 'Enter a valid 6-digit pincode';
+    if (!city.trim()) newErrors.city = 'City is required';
     if (!state.trim()) newErrors.state = 'State is required';
     if (!country.trim()) newErrors.country = 'Country is required';
     setErrors(newErrors);
@@ -89,7 +95,7 @@ export default function CheckoutScreen({ navigation }) {
   const handlePlaceOrder = async () => {
     if (!validate()) return;
 
-    const address = [building, street1, street2, pincode, state, country]
+    const address = [building, street1, street2, city, pincode, state, country]
       .filter(Boolean)
       .join(', ');
 
@@ -113,26 +119,26 @@ export default function CheckoutScreen({ navigation }) {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
-        ]}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
+        {/* Header */}
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
+          ]}
         >
-          <Feather name="arrow-left" size={24} color={theme.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
-          Checkout
-        </Text>
-        <View style={{ width: 32 }} />
-      </View>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+          >
+            <Feather name="arrow-left" size={24} color={theme.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            Checkout
+          </Text>
+          <View style={{ width: 32 }} />
+        </View>
 
-      <ScrollView
+        <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -212,6 +218,16 @@ export default function CheckoutScreen({ navigation }) {
             />
           )}
         </View>
+
+        <AuthInput
+          label="City"
+          icon="navigation"
+          placeholder={pincodeAutoFilled ? city : 'Auto-filled from pincode'}
+          value={city}
+          onChangeText={pincodeAutoFilled ? undefined : setCity}
+          editable={!pincodeAutoFilled}
+          error={errors.city}
+        />
 
         <AuthInput
           label="State"

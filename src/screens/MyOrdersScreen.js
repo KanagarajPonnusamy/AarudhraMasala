@@ -16,6 +16,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useOrders } from '../context/OrderContext';
 import { SIZES } from '../constants/theme';
+import EmptyState from '../components/EmptyState';
 
 function formatDate(isoString) {
   const d = new Date(isoString);
@@ -133,62 +134,54 @@ export default function MyOrdersScreen({ navigation }) {
   const renderItem = ({ item }) => <OrderCard order={item} theme={theme} />;
 
   const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <Feather name="inbox" size={64} color={theme.textSecondary} />
-      <Text style={[styles.emptyTitle, { color: theme.text }]}>
-        No orders yet
-      </Text>
-      <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-        Your order history will appear here
-      </Text>
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={[styles.shopBtn, { backgroundColor: theme.primary }]}
-      >
-        <Text style={styles.shopBtnText}>Start Shopping</Text>
-      </TouchableOpacity>
-    </View>
+    <EmptyState
+      icon="package"
+      title="No orders yet"
+      subtitle="Your order history will appear here"
+      buttonText="Start Shopping"
+      onPress={() => navigation.goBack()}
+    />
   );
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
-        ]}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
+        {/* Header */}
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
+          ]}
         >
-          <Feather name="arrow-left" size={24} color={theme.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
-          My Orders
-        </Text>
-        <View style={{ width: 32 }} />
-      </View>
-
-      {loading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={theme.primary} />
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+          >
+            <Feather name="arrow-left" size={24} color={theme.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            My Orders
+          </Text>
+          <View style={{ width: 32 }} />
         </View>
-      ) : (
-        <FlatList
-          data={orders}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={
-            orders.length === 0 ? styles.emptyList : styles.listContent
-          }
-          ListEmptyComponent={renderEmpty}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+
+        {loading ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color={theme.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={orders}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={
+              orders.length === 0 ? styles.emptyList : styles.listContent
+            }
+            ListEmptyComponent={renderEmpty}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
     </SafeAreaView>
   );
 }
@@ -313,32 +306,5 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 18,
     fontWeight: '900',
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
-    gap: 12,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginTop: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  shopBtn: {
-    marginTop: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  shopBtnText: {
-    color: '#FFF',
-    fontSize: 15,
-    fontWeight: '700',
   },
 });
