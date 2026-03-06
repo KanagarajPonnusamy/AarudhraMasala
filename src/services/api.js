@@ -12,13 +12,14 @@ const APP_ID = 'APP-REG-2XXXX';
 
 // API Endpoints
 const ENDPOINTS = {
-  ADMIN_LOGIN: '/am/auth/login',
-  VALIDATE_USER: '/api/am/users/v1/validateUser', // GET /{email}/{password}
+  ADMIN_LOGIN: `am/auth/sites/v1/validate/gettoken/${APP_ID}`,
+  VALIDATE_USER: `/api/am/users/v1/validateUser`, // GET /{email}/{password}
   REGISTER_USER: `/api/am/users/v1/registerUser/${APP_ID}`, // POST
-  FETCH_USER: '/api/am/users/v1/fetchUserDetails', // GET /{userId}
-  LOGOUT_USER: '/api/am/users/v1/logoutUser', // GET /{email}/{token}
-  FETCH_PRODUCTS: '/api/am/products/v1/fetchProducts', // GET
-  ADD_PRODUCT: '/api/am/products/v1/addProduct', // POST
+  FETCH_USER: `/api/am/users/v1/fetchUserDetails/${APP_ID}`, // GET /{userId}
+  LOGOUT_USER: `/api/am/users/v1/logoutUser/${APP_ID}`, // GET /{email}/{token}
+  FETCH_PRODUCTS: `/api/am/products/v1/fetchProducts/${APP_ID}`, // GET
+  FETCH_HOME_PRODUCTS: `/api/am/products/v1/fetchHomeProductsList/${APP_ID}`, // GET
+  ADD_PRODUCT: `/api/am/products/v1/addProduct/${APP_ID}`, // POST
 };
 
 // Storage Keys
@@ -30,8 +31,8 @@ const STORAGE_KEYS = {
 
 // Admin Credentials
 const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'password123',
+  username: 'aarudhra_public_token_user',
+  password: 'AarudhraPublicToken@2026',
 };
 
 // ---------- Axios Instance ----------
@@ -110,7 +111,7 @@ export async function loginUser(email, password) {
   await ensureAdminToken();
   console.log('[API] User login with:', email);
   const response = await api.get(
-    `${ENDPOINTS.VALIDATE_USER}/${encodeURIComponent(email)}/${encodeURIComponent(password)}`
+    `${ENDPOINTS.VALIDATE_USER}/${encodeURIComponent(email)}/${encodeURIComponent(password)}/${APP_ID}`
   );
   console.log('[API] Login response:', JSON.stringify(response.data));
   const userToken = response.data?.token;
@@ -159,6 +160,12 @@ export async function fetchUserDetails(userId) {
 export async function fetchProducts() {
   await ensureAdminToken();
   const response = await api.get(ENDPOINTS.FETCH_PRODUCTS);
+  return response.data;
+}
+
+export async function fetchHomeProducts() {
+  await ensureAdminToken();
+  const response = await api.get(ENDPOINTS.FETCH_HOME_PRODUCTS);
   return response.data;
 }
 

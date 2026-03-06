@@ -4,6 +4,7 @@
  */
 export { LIGHT_THEME, DARK_THEME, COMMON, SIZES } from './theme';
 export {
+  SECTION_TYPES,
   CATEGORIES,
   BANNERS,
   FEATURED_PRODUCTS,

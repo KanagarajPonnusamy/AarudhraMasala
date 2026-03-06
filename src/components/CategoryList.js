@@ -8,8 +8,19 @@ import { useTheme } from '../context/ThemeContext';
 import { SIZES } from '../constants/theme';
 import { CATEGORIES } from '../constants/data';
 
-export default function CategoryList() {
+export default function CategoryList({ categories, title }) {
   const { theme } = useTheme();
+
+  // Map API data to internal format, falling back to CATEGORIES placeholder images
+  const displayCategories = categories
+    ? categories.map((cat, index) => ({
+        id: cat.categorycode || String(index),
+        name: cat.categoryname || '',
+        icon: cat.categoryurl || (CATEGORIES[index]?.icon ?? ''),
+      }))
+    : CATEGORIES;
+
+  const sectionTitle = title || 'Shop by Category';
 
   const renderCategory = ({ item }) => (
     <TouchableOpacity style={styles.categoryItem}>
@@ -25,10 +36,10 @@ export default function CategoryList() {
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Shop by Category</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>{sectionTitle}</Text>
       </View>
       <FlatList
-        data={CATEGORIES}
+        data={displayCategories}
         renderItem={renderCategory}
         keyExtractor={(item) => item.id}
         horizontal

@@ -24,7 +24,22 @@
       "Bash(ssh-keyscan:*)",
       "Bash(~/.ssh/known_hosts)",
       "Bash(gh auth:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(wc:*)",
+      "Bash(file:*)",
+      "WebSearch",
+      "WebFetch(domain:unsplash.com)",
+      "WebFetch(domain:images.unsplash.com)",
+      "Bash(curl:*)",
+      "WebFetch(domain:www.pexels.com)",
+      "Bash(for id in 6546429 5765827 4397919 8699046 3616956)",
+      "Bash(do echo -n \"ID $id: \")",
+      "Bash(done)",
+      "Bash(for id in 33440714 725998 4021773 57042 6732732 8054395 7953254 16244099 5758969 2291592 12326584 8102133 4051132 4663476 1013420 4499222 10186829 16496064 11465971 6724384)",
+      "Bash(do echo -n \"Pexels $id: \")",
+      "Bash(for id in 5634206 4480158 33984946)",
+      "WebFetch(domain:www.aarudhramasala.com)",
+      "Bash(npx concurrently:*)"
     ]
   }
 }

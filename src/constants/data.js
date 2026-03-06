@@ -2,6 +2,14 @@
  * Created by: Kanagaraj P
  * Created on: 01-03-2026
  */
+export const SECTION_TYPES = {
+  PROMO: 'promo',
+  CATEGORY: 'category',
+  LIST: 'list',
+  FOOTER: 'footer',
+  BANNER: 'banner',
+};
+
 export const CATEGORIES = [
   { id: '1', name: 'Masala Powders', icon: 'https://images.pexels.com/photos/33440714/pexels-photo-33440714.jpeg?w=300&fit=crop' },
   { id: '2', name: 'Oils', icon: 'https://images.pexels.com/photos/725998/pexels-photo-725998.jpeg?w=300&fit=crop' },

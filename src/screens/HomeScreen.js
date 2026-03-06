@@ -7,10 +7,9 @@ import { ScrollView, View, Text, StyleSheet, ActivityIndicator } from 'react-nat
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { fetchProducts } from '../services/api';
-import { FEATURED_PRODUCTS, BEST_SELLERS } from '../constants/data';
+import { fetchHomeProducts } from '../services/api';
+import { SECTION_TYPES } from '../constants/data';
 import Header from '../components/Header';
-import BannerCarousel from '../components/BannerCarousel';
 import CategoryList from '../components/CategoryList';
 import ProductSection from '../components/ProductSection';
 import PromoBanner from '../components/PromoBanner';
@@ -18,7 +17,7 @@ import PromoBanner from '../components/PromoBanner';
 export default function HomeScreen({ navigation }) {
   const { theme } = useTheme();
   const { adminTokenReady } = useAuth();
-  const [products, setProducts] = useState([]);
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,25 +26,12 @@ export default function HomeScreen({ navigation }) {
     let mounted = true;
     (async () => {
       try {
-        const data = await fetchProducts();
+        const data = await fetchHomeProducts();
         if (mounted && Array.isArray(data) && data.length > 0) {
-          const mapped = data.map((p) => ({
-            id: String(p.id),
-            name: p.productname,
-            weight: '',
-            price: p.productprice,
-            originalPrice: p.productprice,
-            rating: 4.5,
-            reviews: 0,
-            image: p.producturl,
-            category: p.productcategory || '',
-            badge: null,
-            productcode: p.productcode || '',
-          }));
-          setProducts(mapped);
+          setSections(data);
         }
       } catch (e) {
-        console.warn('Fetch products failed:', e.message);
+        console.warn('Fetch home products failed:', e.message);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -53,45 +39,100 @@ export default function HomeScreen({ navigation }) {
     return () => { mounted = false; };
   }, [adminTokenReady]);
 
-  // Use API products if available, otherwise fallback to dummy data
-  const displayProducts = products.length > 0 ? products : FEATURED_PRODUCTS;
-  const displayBestSellers = products.length > 0 ? products : BEST_SELLERS;
+  const renderSection = (section, index) => {
+    const { type, title, collections } = section;
+
+    switch (type) {
+      case SECTION_TYPES.CATEGORY:
+        return (
+          <CategoryList
+            key={`category-${index}`}
+            categories={collections}
+            title={title}
+          />
+        );
+
+      case SECTION_TYPES.LIST: {
+        const products = (collections || []).map((p, i) => ({
+          id: String(p.id || i),
+          name: p.productname || '',
+          weight: '',
+          price: p.offerprice || p.productprice || 0,
+          originalPrice: p.productprice || 0,
+          rating: 4.5,
+          reviews: 0,
+          image: p.producturl || '',
+          category: p.productcategory || '',
+          badge: null,
+          productcode: p.productcode || '',
+        }));
+        return (
+          <ProductSection
+            key={`list-${index}`}
+            title={title}
+            products={products}
+          />
+        );
+      }
+
+      case SECTION_TYPES.PROMO:
+        return (
+          <PromoBanner
+            key={`promo-${index}`}
+            promos={collections}
+          />
+        );
+
+      case SECTION_TYPES.FOOTER: {
+        const items = collections || [];
+        return (
+          <View key={`footer-${index}`} style={[styles.footer, { borderTopColor: theme.border }]}>
+            <View style={styles.footerLogoContainer}>
+              <Text style={[styles.footerLogoText, { color: theme.primary }]}>Aarudhra</Text>
+              <Text style={[styles.footerLogoSub, { color: theme.primary }]}>MASALA</Text>
+            </View>
+            {items.map((text, i) => (
+              <Text key={i} style={styles.footerText}>{text}</Text>
+            ))}
+          </View>
+        );
+      }
+
+      case SECTION_TYPES.BANNER:
+        // Banner type design deferred — skip for now
+        return null;
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar style={theme.isDark ? 'light' : 'dark'} />
       <Header navigation={navigation} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <BannerCarousel />
-        <CategoryList />
-
         {loading ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color={theme.primary} />
             <Text style={[styles.loaderText, { color: theme.textSecondary }]}>
-              Loading products...
+              Loading...
             </Text>
           </View>
+        ) : sections.length > 0 ? (
+          (() => {
+            const nonFooter = sections.filter((s) => s.type !== SECTION_TYPES.FOOTER);
+            const footer = sections.find((s) => s.type === SECTION_TYPES.FOOTER);
+            const ordered = footer ? [...nonFooter, footer] : nonFooter;
+            return ordered.map(renderSection);
+          })()
         ) : (
-          <>
-            <ProductSection title="Featured Products" products={displayProducts} />
-            <PromoBanner />
-            <ProductSection title="Best Sellers" products={displayBestSellers} />
-          </>
+          <View style={styles.loaderContainer}>
+            <Text style={[styles.loaderText, { color: theme.textSecondary }]}>
+              No content available
+            </Text>
+          </View>
         )}
-
-        <View style={[styles.footer, { borderTopColor: theme.border }]}>
-          <Text style={[styles.footerLogo, { color: theme.primary }]}>Aarudhra Masala</Text>
-          <Text style={[styles.footerText, { color: theme.textSecondary }]}>
-            Pure & Traditional Spices
-          </Text>
-          <Text style={[styles.footerText, { color: theme.textSecondary }]}>
-            Quality you can taste, purity you can trust.
-          </Text>
-          <Text style={[styles.copyright, { color: theme.textSecondary }]}>
-            {'\u00A9'} 2026 Aarudhra Masala. All Rights Reserved.
-          </Text>
-        </View>
       </ScrollView>
     </View>
   );
@@ -119,18 +160,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 16,
   },
-  footerLogo: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 4,
+  footerLogoContainer: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  footerLogoText: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: 1,
+    textShadowColor: 'currentColor',
+    textShadowOffset: { width: 1.6, height: 0 },
+    textShadowRadius: 0,
+  },
+  footerLogoSub: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 4,
+    textShadowColor: 'currentColor',
+    textShadowOffset: { width: 0.6, height: 0 },
+    textShadowRadius: 0,
   },
   footerText: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  copyright: {
     fontSize: 11,
-    marginTop: 12,
-    fontWeight: '500',
+    color: '#999',
+    marginTop: 3,
+    textAlign: 'center',
+    paddingHorizontal: 24,
   },
 });
