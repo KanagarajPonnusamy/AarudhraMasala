@@ -3,7 +3,7 @@
  * Created on: 04-03-2026
  */
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 
@@ -39,7 +39,6 @@ export default function EmptyState({ icon, title, subtitle, buttonText, onPress 
         Animated.timing(titleTranslateY, {
           toValue: 0,
           duration: 350,
-          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
       ]),
@@ -53,7 +52,6 @@ export default function EmptyState({ icon, title, subtitle, buttonText, onPress 
         Animated.timing(subtitleTranslateY, {
           toValue: 0,
           duration: 300,
-          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
       ]),
@@ -67,7 +65,6 @@ export default function EmptyState({ icon, title, subtitle, buttonText, onPress 
         Animated.timing(btnTranslateY, {
           toValue: 0,
           duration: 300,
-          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
       ]),
@@ -79,13 +76,11 @@ export default function EmptyState({ icon, title, subtitle, buttonText, onPress 
         Animated.timing(iconFloat, {
           toValue: -8,
           duration: 1500,
-          easing: Easing.inOut(Easing.sine),
           useNativeDriver: true,
         }),
         Animated.timing(iconFloat, {
           toValue: 0,
           duration: 1500,
-          easing: Easing.inOut(Easing.sine),
           useNativeDriver: true,
         }),
       ]),

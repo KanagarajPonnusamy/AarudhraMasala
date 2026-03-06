@@ -62,6 +62,7 @@ export default function AuthInput({
           editable={editable}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          {...(isPassword && { textContentType: 'none', autoComplete: 'off' })}
         />
         {isPassword && (
           <TouchableOpacity
