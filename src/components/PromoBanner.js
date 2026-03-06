@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Animated,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -51,8 +52,9 @@ export default function PromoBanner({ promos }) {
 const PROMO_COLORS = ['#108474', '#D4A373', '#E76F51', '#8B5E3C', '#6B8E23', '#9B2335'];
 
 function PromoCarousel({ promos, theme }) {
-  const cardWidth = 350;
-  const cardHeight = Math.round(cardWidth * 0.55); // ~192px, a 16:9-ish ratio
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = useMemo(() => Math.min(Math.round(screenWidth * 0.85), 500), [screenWidth]);
+  const cardHeight = useMemo(() => Math.round(cardWidth * 0.6), [cardWidth]);
   const snapInterval = useMemo(() => cardWidth + CARD_SPACING, [cardWidth]);
 
   const scrollX = useRef(new Animated.Value(0)).current;
