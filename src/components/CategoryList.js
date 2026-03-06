@@ -74,12 +74,12 @@ const styles = StyleSheet.create({
   },
   categoryItem: {
     alignItems: 'center',
-    width: 126,
+    width: 180,
   },
   categoryIcon: {
-    width: 108,
-    height: 108,
-    borderRadius: 54,
+    width: 162,
+    height: 162,
+    borderRadius: 81,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,

@@ -5,6 +5,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   getAdminToken,
+  startAdminTokenRefresh,
+  stopAdminTokenRefresh,
   loginUser,
   logoutUser,
   registerUser,
@@ -20,12 +22,13 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [adminTokenReady, setAdminTokenReady] = useState(false);
 
-  // On app start: fetch admin token + restore saved user
+  // On app start: fetch fresh admin token + restore saved user + start periodic refresh
   useEffect(() => {
     (async () => {
       try {
-        await getAdminToken();
+        await getAdminToken(); // always fetches fresh token
         setAdminTokenReady(true);
+        startAdminTokenRefresh(); // refresh every 10 min + on foreground
       } catch (e) {
         console.warn('Admin token fetch failed:', e.message);
         setAdminTokenReady(true); // continue anyway
@@ -38,6 +41,8 @@ export function AuthProvider({ children }) {
       }
       setIsLoading(false);
     })();
+
+    return () => stopAdminTokenRefresh();
   }, []);
 
   const login = async (email, password) => {

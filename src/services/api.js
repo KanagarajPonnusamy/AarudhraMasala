@@ -4,6 +4,7 @@
  */
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState } from 'react-native';
 
 // ---------- Constants ----------
 
@@ -88,13 +89,56 @@ async function fetchAdminToken() {
   return String(token);
 }
 
+// Always fetch a fresh admin token (never rely on cached/stale token)
 export async function getAdminToken() {
-  const existing = await AsyncStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
-  if (existing) {
-    console.log('[API] Using existing admin token');
-    return existing;
-  }
+  console.log('[API] Fetching fresh admin token...');
+  await AsyncStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
   return fetchAdminToken();
+}
+
+// ---------- Periodic Token Refresh ----------
+
+const TOKEN_REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
+let refreshTimer = null;
+let appStateSubscription = null;
+
+export function startAdminTokenRefresh() {
+  stopAdminTokenRefresh();
+
+  // Refresh token every 10 minutes
+  refreshTimer = setInterval(async () => {
+    try {
+      console.log('[API] Periodic admin token refresh...');
+      await AsyncStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
+      await fetchAdminToken();
+    } catch (e) {
+      console.warn('[API] Periodic token refresh failed:', e.message);
+    }
+  }, TOKEN_REFRESH_INTERVAL);
+
+  // Refresh token when app comes back to foreground
+  appStateSubscription = AppState.addEventListener('change', async (nextState) => {
+    if (nextState === 'active') {
+      try {
+        console.log('[API] App foregrounded, refreshing admin token...');
+        await AsyncStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
+        await fetchAdminToken();
+      } catch (e) {
+        console.warn('[API] Foreground token refresh failed:', e.message);
+      }
+    }
+  });
+}
+
+export function stopAdminTokenRefresh() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+  if (appStateSubscription) {
+    appStateSubscription.remove();
+    appStateSubscription = null;
+  }
 }
 
 async function ensureAdminToken() {

@@ -7,17 +7,17 @@ import {
   View,
   Text,
   StyleSheet,
+  Image,
   TouchableOpacity,
   Animated,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { SIZES } from '../constants/theme';
 
 const AUTO_SCROLL_DELAY = 4000;
-const CARD_SPACING = 12;
+const CARD_SPACING = 10;
 
 export default function PromoBanner({ promos }) {
   const { theme } = useTheme();
@@ -48,19 +48,22 @@ export default function PromoBanner({ promos }) {
   return <PromoCarousel promos={promos} theme={theme} />;
 }
 
-function PromoCarousel({ promos, theme }) {
-  const { width: rawScreenWidth } = useWindowDimensions();
-  const screenWidth = Platform.OS === 'web' && rawScreenWidth > SIZES.maxWidth
-    ? SIZES.maxWidth
-    : rawScreenWidth;
+const PROMO_COLORS = ['#108474', '#D4A373', '#E76F51', '#8B5E3C', '#6B8E23', '#9B2335'];
 
-  const cardWidth = useMemo(() => screenWidth - SIZES.padding * 2, [screenWidth]);
+function PromoCarousel({ promos, theme }) {
+  const cardWidth = 350;
+  const cardHeight = Math.round(cardWidth * 0.55); // ~192px, a 16:9-ish ratio
   const snapInterval = useMemo(() => cardWidth + CARD_SPACING, [cardWidth]);
+
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef(null);
   const activeIndexRef = useRef(0);
   const isUserInteracting = useRef(false);
   const autoScrollTimer = useRef(null);
+  const dragStartOffset = useRef(0);
+
+  // Scroll item by item, from first to last
+  const maxIndex = Math.max(0, promos.length - 1);
 
   const stopAutoScroll = useCallback(() => {
     if (autoScrollTimer.current) {
@@ -70,69 +73,131 @@ function PromoCarousel({ promos, theme }) {
   }, []);
 
   const scrollToIndex = useCallback((index) => {
-    const clamped = Math.max(0, Math.min(index, promos.length - 1));
+    const clamped = Math.max(0, Math.min(index, maxIndex));
     activeIndexRef.current = clamped;
     flatListRef.current?.scrollToOffset({
       offset: clamped * snapInterval,
       animated: true,
     });
-  }, [snapInterval, promos.length]);
+  }, [snapInterval, maxIndex]);
 
   const startAutoScroll = useCallback(() => {
     stopAutoScroll();
     if (promos.length <= 1) return;
     autoScrollTimer.current = setInterval(() => {
       if (!isUserInteracting.current) {
-        const nextIndex = (activeIndexRef.current + 1) % promos.length;
+        const nextIndex = activeIndexRef.current >= maxIndex
+          ? 0
+          : activeIndexRef.current + 1;
         scrollToIndex(nextIndex);
       }
     }, AUTO_SCROLL_DELAY);
-  }, [promos.length, scrollToIndex, stopAutoScroll]);
+  }, [promos.length, maxIndex, scrollToIndex, stopAutoScroll]);
 
   useEffect(() => {
     if (promos.length > 1) startAutoScroll();
     return stopAutoScroll;
   }, [promos.length, startAutoScroll, stopAutoScroll]);
 
-  const onScrollBeginDrag = () => {
+  // --- Interaction handlers ---
+
+  const onScrollBeginDrag = (e) => {
     isUserInteracting.current = true;
+    dragStartOffset.current = e.nativeEvent.contentOffset.x;
     stopAutoScroll();
+  };
+
+  const onScrollEndDrag = (e) => {
+    const currentOffset = e.nativeEvent.contentOffset.x;
+    const delta = currentOffset - dragStartOffset.current;
+    const threshold = cardWidth * 0.15;
+    let targetIndex = activeIndexRef.current;
+
+    if (delta > threshold) {
+      targetIndex = activeIndexRef.current + 1;
+    } else if (delta < -threshold) {
+      targetIndex = activeIndexRef.current - 1;
+    }
+
+    scrollToIndex(targetIndex);
+    isUserInteracting.current = false;
+    if (promos.length > 1) startAutoScroll();
   };
 
   const onMomentumScrollEnd = (e) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / snapInterval);
-    activeIndexRef.current = Math.max(0, Math.min(index, promos.length - 1));
+    activeIndexRef.current = Math.max(0, Math.min(index, maxIndex));
+    isUserInteracting.current = false;
+    if (promos.length > 1) startAutoScroll();
+  };
+
+  // Mouse hover (web) — pause auto-scroll on hover
+  const onMouseEnter = () => {
+    isUserInteracting.current = true;
+    stopAutoScroll();
+  };
+
+  const onMouseLeave = () => {
+    isUserInteracting.current = false;
+    if (promos.length > 1) startAutoScroll();
+  };
+
+  // Touch start/end (mobile) — pause auto-scroll on touch
+  const onTouchStart = () => {
+    isUserInteracting.current = true;
+    stopAutoScroll();
+  };
+
+  const onTouchEnd = () => {
     isUserInteracting.current = false;
     if (promos.length > 1) startAutoScroll();
   };
 
   const onScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-    { useNativeDriver: false }
+    { useNativeDriver: false },
   );
 
-  const PROMO_COLORS = ['#108474', '#D4A373', '#E76F51', '#8B5E3C', '#6B8E23', '#9B2335'];
+  const getPromoImage = (item) =>
+    item.promourl || item.imageurl || item.image || item.promoimage || null;
 
   const renderPromo = ({ item, index }) => {
     const bgColor = PROMO_COLORS[index % PROMO_COLORS.length];
+    const imageUri = getPromoImage(item);
+
     return (
-      <View style={[styles.promoCard, { width: cardWidth, backgroundColor: bgColor }]}>
-        <View style={styles.promoIconCircle}>
-          <Feather name="gift" size={22} color="#FFF" />
-        </View>
-        <Text style={styles.promoName} numberOfLines={2}>{item.promoname}</Text>
-        <Text style={styles.promoDesc} numberOfLines={2}>{item.description}</Text>
-        {item.promocode ? (
-          <View style={styles.promoCodeBadge}>
-            <Text style={styles.promoCodeText}>Code: {item.promocode}</Text>
+      <View style={[styles.promoCard, { width: cardWidth, height: cardHeight, backgroundColor: bgColor }]}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.promoImage} />
+        ) : (
+          <View style={styles.promoIconArea}>
+            <View style={styles.promoIconCircle}>
+              <Feather name="gift" size={20} color="#FFF" />
+            </View>
           </View>
-        ) : null}
+        )}
+        <View style={styles.promoOverlay}>
+          <Text style={styles.promoName} numberOfLines={2}>{item.promoname}</Text>
+          {item.promocode ? (
+            <View style={styles.promoCodeBadge}>
+              <Text style={styles.promoCodeText}>{item.promocode}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
     );
   };
 
+  const hoverProps = Platform.OS === 'web'
+    ? { onMouseEnter, onMouseLeave }
+    : {};
+
+  const touchProps = Platform.OS !== 'web'
+    ? { onTouchStart, onTouchEnd }
+    : {};
+
   return (
-    <View style={styles.carouselContainer}>
+    <View style={styles.carouselContainer} {...hoverProps} {...touchProps}>
       <Animated.FlatList
         ref={flatListRef}
         data={promos}
@@ -146,14 +211,20 @@ function PromoCarousel({ promos, theme }) {
         bounces={false}
         contentContainerStyle={{ paddingHorizontal: SIZES.padding }}
         ItemSeparatorComponent={() => <View style={{ width: CARD_SPACING }} />}
+        getItemLayout={(_, index) => ({
+          length: snapInterval,
+          offset: snapInterval * index,
+          index,
+        })}
         onScroll={onScroll}
         scrollEventThrottle={16}
         onScrollBeginDrag={onScrollBeginDrag}
+        onScrollEndDrag={onScrollEndDrag}
         onMomentumScrollEnd={onMomentumScrollEnd}
       />
       {promos.length > 1 && (
         <View style={styles.dots}>
-          {promos.map((_, i) => {
+          {Array.from({ length: maxIndex + 1 }).map((_, i) => {
             const dotWidth = scrollX.interpolate({
               inputRange: [
                 (i - 1) * snapInterval,
@@ -243,41 +314,56 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   promoCard: {
-    borderRadius: SIZES.radius + 4,
-    padding: 20,
-    minHeight: 140,
+    borderRadius: SIZES.radius + 2,
+    overflow: 'hidden',
+  },
+  promoImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  promoIconArea: {
+    flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   promoIconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+  },
+  promoOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   promoName: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 11,
+    fontWeight: '700',
     color: '#FFF',
-    marginBottom: 6,
-  },
-  promoDesc: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
-    lineHeight: 18,
-    marginBottom: 10,
   },
   promoCodeBadge: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255,255,255,0.25)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
+    marginTop: 4,
   },
   promoCodeText: {
-    fontSize: 13,
+    fontSize: 9,
     fontWeight: '700',
     color: '#FFF',
   },
