@@ -9,7 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useCart } from '../context/CartContext';
 import { SIZES } from '../constants/theme';
 
-export default function Header({ navigation }) {
+export default function Header({ navigation, onSearchPress }) {
   const { theme } = useTheme();
   const { cartCount } = useCart();
 
@@ -27,7 +27,7 @@ export default function Header({ navigation }) {
       <View style={styles.rightIcons}>
         <TouchableOpacity
           style={styles.iconBtn}
-          onPress={() => navigation.getParent()?.navigate('Search')}
+          onPress={onSearchPress}
         >
           <Feather name="search" size={22} color={theme.text} />
         </TouchableOpacity>
@@ -51,9 +51,8 @@ export default function Header({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 36,
     paddingHorizontal: SIZES.padding,
-    paddingBottom: 12,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',

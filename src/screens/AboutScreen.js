@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  SafeAreaView,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -19,7 +20,7 @@ export default function AboutScreen({ navigation }) {
   const { theme } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -95,7 +96,7 @@ export default function AboutScreen({ navigation }) {
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -104,9 +105,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingTop: 36,
     paddingHorizontal: SIZES.padding,
-    paddingBottom: 12,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',

@@ -4,6 +4,7 @@
  */
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { placeOrderAPI } from '../services/api';
 
 const ORDERS_KEY = '@orders';
 
@@ -31,13 +32,19 @@ export function OrderProvider({ children }) {
   };
 
   const placeOrder = useCallback(async (orderData) => {
+    // Send order to API
+    const userid = orderData.order?.userid || 0;
+    const apiResponse = await placeOrderAPI(userid, orderData);
+
     const newOrder = {
-      id: `ORD-${Date.now()}`,
+      id: apiResponse?.orderid || `ORD-${Date.now()}`,
       ...orderData,
+      ...apiResponse,
       status: 'Confirmed',
       placed_at: new Date().toISOString(),
     };
 
+    // Also save locally
     const updated = [newOrder, ...orders];
     setOrders(updated);
     try {

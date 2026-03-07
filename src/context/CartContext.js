@@ -60,14 +60,16 @@ export function CartProvider({ children }) {
 
     return {
       order: {
+        userid: 0,
         total_amount: cartTotal,
         productcodes,
         shippingaddress: '',
-        billingaddress: '',
         pincode: '',
+        billingaddress: '',
         ordered_at: today,
       },
       orderdetails: cartItems.map((item) => ({
+        userid: 0,
         quantity: item.quantity,
         productprice: String(item.price),
         productcode: item.productcode || '',

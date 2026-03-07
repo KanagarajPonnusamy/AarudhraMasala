@@ -5,14 +5,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   getAdminToken,
-  startAdminTokenRefresh,
-  stopAdminTokenRefresh,
   loginUser,
   logoutUser,
   registerUser,
   saveUser,
   getStoredUser,
   clearUser,
+  isAdminTokenChanged,
+  resetAdminTokenChanged,
 } from '../services/api';
 
 const AuthContext = createContext();
@@ -22,13 +22,12 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [adminTokenReady, setAdminTokenReady] = useState(false);
 
-  // On app start: fetch fresh admin token + restore saved user + start periodic refresh
+  // On app start: fetch fresh admin token + restore saved user
   useEffect(() => {
     (async () => {
       try {
         await getAdminToken(); // always fetches fresh token
         setAdminTokenReady(true);
-        startAdminTokenRefresh(); // refresh every 10 min + on foreground
       } catch (e) {
         console.warn('Admin token fetch failed:', e.message);
         setAdminTokenReady(true); // continue anyway
@@ -41,20 +40,22 @@ export function AuthProvider({ children }) {
       }
       setIsLoading(false);
     })();
-
-    return () => stopAdminTokenRefresh();
   }, []);
+
+  const checkAdminTokenChanged = () => isAdminTokenChanged();
 
   const login = async (email, password) => {
     const data = await loginUser(email, password);
     const userData = {
       email,
+      user_id: data.id || data.user_id || '',
       firstname: data.firstname || data.firstName || email.split('@')[0],
       lastname: data.lastname || data.lastName || '',
       ...data,
     };
     setUser(userData);
     await saveUser(userData);
+    resetAdminTokenChanged(); // clear flag after successful login
     return userData;
   };
 
@@ -77,7 +78,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, adminTokenReady, login, register, logout }}
+      value={{ user, isLoading, adminTokenReady, login, register, logout, checkAdminTokenChanged }}
     >
       {children}
     </AuthContext.Provider>

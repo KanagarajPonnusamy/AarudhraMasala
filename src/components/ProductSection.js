@@ -4,14 +4,16 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, useWindowDimensions } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 import { SIZES } from '../constants/theme';
 import ProductCard from './ProductCard';
 
 const GAP = 20;
 
-export default function ProductSection({ title, products }) {
+export default function ProductSection({ title, products, typecode }) {
   const { theme } = useTheme();
+  const navigation = useNavigation();
   const { width: screenWidth } = useWindowDimensions();
 
   const containerWidth = Platform.OS === 'web' && screenWidth > SIZES.maxWidth
@@ -25,9 +27,13 @@ export default function ProductSection({ title, products }) {
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>{title}</Text>
-        <TouchableOpacity>
-          <Text style={[styles.viewAll, { color: theme.primary }]}>View All</Text>
-        </TouchableOpacity>
+        {typecode ? (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ProductList', { title, typecode })}
+          >
+            <Text style={[styles.viewAll, { color: theme.primary }]}>View All</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
       <View style={styles.grid}>
         {products.map((item) => (

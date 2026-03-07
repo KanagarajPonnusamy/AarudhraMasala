@@ -17,6 +17,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useCart } from '../context/CartContext';
 import { useOrders } from '../context/OrderContext';
+import { useAuth } from '../context/AuthContext';
 import AuthInput from '../components/AuthInput';
 import { SIZES } from '../constants/theme';
 
@@ -24,6 +25,7 @@ export default function CheckoutScreen({ navigation }) {
   const { theme } = useTheme();
   const { cartItems, cartCount, cartTotal, getOrderObject, clearCart } = useCart();
   const { placeOrder } = useOrders();
+  const { user, checkAdminTokenChanged } = useAuth();
 
   const [building, setBuilding] = useState('');
   const [street1, setStreet1] = useState('');
@@ -35,6 +37,7 @@ export default function CheckoutScreen({ navigation }) {
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [pincodeAutoFilled, setPincodeAutoFilled] = useState(false);
   const [errors, setErrors] = useState({});
+  const [placing, setPlacing] = useState(false);
 
   useEffect(() => {
     if (pincode.length === 6) {
@@ -95,24 +98,55 @@ export default function CheckoutScreen({ navigation }) {
   const handlePlaceOrder = async () => {
     if (!validate()) return;
 
+    // Require login to place an order
+    if (!user || checkAdminTokenChanged()) {
+      Alert.alert(
+        !user ? 'Login Required' : 'Session Expired',
+        !user
+          ? 'Please login to place your order.'
+          : 'Your session has changed. Please login again to place your order.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Login',
+            onPress: () => navigation.navigate('Login', { returnTo: 'Checkout' }),
+          },
+        ]
+      );
+      return;
+    }
+
     const address = [building, street1, street2, city, pincode, state, country]
       .filter(Boolean)
       .join(', ');
 
+    const userid = Number(user?.user_id) || 0;
     const order = getOrderObject();
+    order.order.userid = userid;
     order.order.shippingaddress = address;
     order.order.billingaddress = address;
     order.order.pincode = pincode;
 
-    // Include product names in order details for display
-    order.orderdetails = order.orderdetails.map((detail, idx) => ({
+    // Set userid on each order detail
+    order.orderdetails = order.orderdetails.map((detail) => ({
       ...detail,
-      productName: cartItems[idx]?.name || detail.productcode,
+      userid,
     }));
 
-    await placeOrder(order);
-    clearCart();
-    navigation.replace('OrderSuccess');
+    setPlacing(true);
+    try {
+      await placeOrder(order);
+      clearCart();
+      navigation.replace('OrderSuccess');
+    } catch (e) {
+      console.log('[Checkout] Place order failed:', e.response?.status, JSON.stringify(e.response?.data));
+      Alert.alert(
+        'Order Failed',
+        e.response?.data?.message || e.message || 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setPlacing(false);
+    }
   };
 
   return (
@@ -222,20 +256,24 @@ export default function CheckoutScreen({ navigation }) {
         <AuthInput
           label="City"
           icon="navigation"
-          placeholder={pincodeAutoFilled ? city : 'Auto-filled from pincode'}
+          placeholder="Auto-filled from pincode"
           value={city}
-          onChangeText={pincodeAutoFilled ? undefined : setCity}
-          editable={!pincodeAutoFilled}
+          onChangeText={(text) => {
+            setCity(text);
+            if (errors.city) setErrors((prev) => ({ ...prev, city: null }));
+          }}
           error={errors.city}
         />
 
         <AuthInput
           label="State"
           icon="map"
-          placeholder={pincodeAutoFilled ? state : 'Auto-filled from pincode'}
+          placeholder="Auto-filled from pincode"
           value={state}
-          onChangeText={pincodeAutoFilled ? undefined : setState}
-          editable={!pincodeAutoFilled}
+          onChangeText={(text) => {
+            setState(text);
+            if (errors.state) setErrors((prev) => ({ ...prev, state: null }));
+          }}
           error={errors.state}
         />
 
@@ -285,13 +323,20 @@ export default function CheckoutScreen({ navigation }) {
           },
         ]}
       >
-        <TouchableOpacity
-          style={[styles.placeOrderBtn, { backgroundColor: theme.primary }]}
-          onPress={handlePlaceOrder}
-        >
-          <Feather name="check-circle" size={18} color="#FFF" />
-          <Text style={styles.placeOrderText}>Place Order</Text>
-        </TouchableOpacity>
+        {placing ? (
+          <View style={styles.placeOrderBtn}>
+            <ActivityIndicator color={theme.primary} size="small" />
+            <Text style={[styles.placeOrderText, { color: theme.primary }]}>Placing Order...</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[styles.placeOrderBtn, { backgroundColor: theme.primary }]}
+            onPress={handlePlaceOrder}
+          >
+            <Feather name="check-circle" size={18} color="#FFF" />
+            <Text style={styles.placeOrderText}>Place Order</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -305,9 +350,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 36,
     paddingHorizontal: SIZES.padding,
-    paddingBottom: 14,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
   backBtn: {

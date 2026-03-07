@@ -39,7 +39,9 @@
       "Bash(do echo -n \"Pexels $id: \")",
       "Bash(for id in 5634206 4480158 33984946)",
       "WebFetch(domain:www.aarudhramasala.com)",
-      "Bash(npx concurrently:*)"
+      "Bash(npx concurrently:*)",
+      "Bash(find:*)",
+      "Bash(npx:*)"
     ]
   }
 }

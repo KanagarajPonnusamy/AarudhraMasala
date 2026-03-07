@@ -2,23 +2,91 @@
  * Created by: Kanagaraj P
  * Created on: 01-03-2026
  */
-import React, { useEffect, useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import {
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  SafeAreaView,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  Image,
+  Keyboard,
+  RefreshControl,
+} from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { fetchHomeProducts } from '../services/api';
 import { SECTION_TYPES } from '../constants/data';
+import { SIZES } from '../constants/theme';
+import { useCart } from '../context/CartContext';
 import Header from '../components/Header';
 import CategoryList from '../components/CategoryList';
 import ProductSection from '../components/ProductSection';
 import PromoBanner from '../components/PromoBanner';
+import BannerSection from '../components/BannerSection';
 
 export default function HomeScreen({ navigation }) {
   const { theme } = useTheme();
   const { adminTokenReady } = useAuth();
+  const { addToCart, removeFromCart, isInCart } = useCart();
+  const insets = useSafeAreaInsets();
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [query, setQuery] = useState('');
+  const searchInputRef = useRef(null);
+
+  // Extract all products from list sections for local search
+  const allProducts = useMemo(() => {
+    const products = [];
+    sections.forEach((section, sIdx) => {
+      if (section.type === SECTION_TYPES.LIST && Array.isArray(section.collections)) {
+        section.collections.forEach((p, i) => {
+          products.push({
+            id: `${sIdx}-${p.id || i}`,
+            name: p.productname || '',
+            weight: '',
+            price: p.offerprice || p.productprice || 0,
+            originalPrice: p.productprice || 0,
+            image: p.producturl || '',
+            category: p.productcategory || '',
+            productcode: p.productcode || '',
+          });
+        });
+      }
+    });
+    return products;
+  }, [sections]);
+
+  const searchResults = useMemo(() => {
+    if (!query.trim()) return [];
+    const q = query.toLowerCase();
+    return allProducts.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        p.productcode.toLowerCase().includes(q)
+    );
+  }, [query, allProducts]);
+
+  const openSearch = () => {
+    setSearchVisible(true);
+    setTimeout(() => searchInputRef.current?.focus(), 100);
+  };
+
+  const closeSearch = () => {
+    setSearchVisible(false);
+    setQuery('');
+    Keyboard.dismiss();
+  };
 
   useEffect(() => {
     if (!adminTokenReady) return;
@@ -39,8 +107,22 @@ export default function HomeScreen({ navigation }) {
     return () => { mounted = false; };
   }, [adminTokenReady]);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const data = await fetchHomeProducts();
+      if (Array.isArray(data) && data.length > 0) {
+        setSections(data);
+      }
+    } catch (e) {
+      console.warn('Refresh home products failed:', e.message);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
   const renderSection = (section, index) => {
-    const { type, title, collections } = section;
+    const { type, title, typecode, collections } = section;
 
     switch (type) {
       case SECTION_TYPES.CATEGORY:
@@ -54,7 +136,7 @@ export default function HomeScreen({ navigation }) {
 
       case SECTION_TYPES.LIST: {
         const products = (collections || []).map((p, i) => ({
-          id: String(p.id || i),
+          id: `${index}-${p.id || i}`,
           name: p.productname || '',
           weight: '',
           price: p.offerprice || p.productprice || 0,
@@ -71,6 +153,7 @@ export default function HomeScreen({ navigation }) {
             key={`list-${index}`}
             title={title}
             products={products}
+            typecode={typecode}
           />
         );
       }
@@ -91,16 +174,20 @@ export default function HomeScreen({ navigation }) {
               <Text style={[styles.footerLogoText, { color: theme.primary }]}>Aarudhra</Text>
               <Text style={[styles.footerLogoSub, { color: theme.primary }]}>MASALA</Text>
             </View>
-            {items.map((text, i) => (
-              <Text key={i} style={styles.footerText}>{text}</Text>
+            {items.map((item, i) => (
+              <Text key={item.id || i} style={styles.footerText}>{item.pageval || item}</Text>
             ))}
           </View>
         );
       }
 
       case SECTION_TYPES.BANNER:
-        // Banner type design deferred — skip for now
-        return null;
+        return (
+          <BannerSection
+            key={`banner-${index}`}
+            banners={collections}
+          />
+        );
 
       default:
         return null;
@@ -108,10 +195,16 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar style={theme.isDark ? 'light' : 'dark'} />
-      <Header navigation={navigation} />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <Header navigation={navigation} onSearchPress={openSearch} />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />
+        }
+      >
         {loading ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color={theme.primary} />
@@ -122,9 +215,8 @@ export default function HomeScreen({ navigation }) {
         ) : sections.length > 0 ? (
           (() => {
             const nonFooter = sections.filter((s) => s.type !== SECTION_TYPES.FOOTER);
-            const footer = sections.find((s) => s.type === SECTION_TYPES.FOOTER);
-            const ordered = footer ? [...nonFooter, footer] : nonFooter;
-            return ordered.map(renderSection);
+            const footers = sections.filter((s) => s.type === SECTION_TYPES.FOOTER);
+            return [...nonFooter, ...footers].map(renderSection);
           })()
         ) : (
           <View style={styles.loaderContainer}>
@@ -134,7 +226,100 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
       </ScrollView>
-    </View>
+
+      {/* Search Overlay — sits below the header */}
+      {searchVisible && (
+        <View style={styles.searchOverlay}>
+          {/* Tappable transparent backdrop — body area */}
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={closeSearch}
+            style={[styles.searchBackdrop, { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.7)' }]}
+          />
+
+          {/* Search content on top of backdrop */}
+          <View style={styles.searchContent}>
+            {/* Opaque top area (notch + search bar) */}
+            <View style={[styles.searchTopArea, { paddingTop: insets.top, backgroundColor: theme.headerBg }]}>
+              <View style={styles.searchHeader}>
+                <TouchableOpacity onPress={closeSearch} style={styles.searchBackBtn}>
+                  <Feather name="arrow-left" size={24} color={theme.text} />
+                </TouchableOpacity>
+                <View style={[styles.searchBar, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+                  <Feather name="search" size={18} color={theme.textSecondary} />
+                  <TextInput
+                    ref={searchInputRef}
+                    placeholder="Search masalas, oils, ghee..."
+                    placeholderTextColor={theme.textSecondary}
+                    style={[styles.searchInput, { color: theme.text }]}
+                    value={query}
+                    onChangeText={setQuery}
+                    returnKeyType="search"
+                  />
+                  {query.length > 0 && (
+                    <TouchableOpacity onPress={() => setQuery('')}>
+                      <Feather name="x" size={18} color={theme.textSecondary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </View>
+
+            {/* Results */}
+            {query.trim().length > 0 && (
+              searchResults.length === 0 ? (
+                <View style={[styles.searchResultsBox, { backgroundColor: theme.background }]}>
+                  <Text style={[styles.searchEmptyText, { color: theme.textSecondary, padding: 20 }]}>
+                    No products found for "{query}"
+                  </Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={searchResults}
+                  keyExtractor={(item) => item.id}
+                  keyboardShouldPersistTaps="handled"
+                  style={[styles.searchResultsBox, { backgroundColor: theme.background }]}
+                  renderItem={({ item }) => {
+                    const inCart = isInCart(item.id);
+                    return (
+                      <View style={[styles.searchItem, { borderBottomColor: theme.border }]}>
+                        {item.image ? (
+                          <Image source={{ uri: item.image }} style={styles.searchItemImage} />
+                        ) : (
+                          <View style={[styles.searchItemImage, { backgroundColor: theme.inputBg }]} />
+                        )}
+                        <View style={styles.searchItemInfo}>
+                          <Text style={[styles.searchItemName, { color: theme.text }]} numberOfLines={1}>
+                            {item.name}
+                          </Text>
+                          {item.category ? (
+                            <Text style={[styles.searchItemCategory, { color: theme.textSecondary }]} numberOfLines={1}>
+                              {item.category}
+                            </Text>
+                          ) : null}
+                          <Text style={[styles.searchItemPrice, { color: theme.primary }]}>
+                            ₹{item.price}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          style={[
+                            styles.searchCartBtn,
+                            { backgroundColor: inCart ? theme.badge : theme.primary },
+                          ]}
+                          onPress={() => inCart ? removeFromCart(item.id) : addToCart(item)}
+                        >
+                          <Feather name={inCart ? 'check' : 'plus'} size={16} color="#FFF" />
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  }}
+                />
+              )
+            )}
+          </View>
+        </View>
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -186,5 +371,91 @@ const styles = StyleSheet.create({
     marginTop: 3,
     textAlign: 'center',
     paddingHorizontal: 24,
+  },
+  // Search overlay
+  searchOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
+  },
+  searchBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  searchContent: {
+    maxHeight: '80%',
+  },
+  searchTopArea: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  searchHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SIZES.padding,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  searchBackBtn: {
+    padding: 4,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    padding: 0,
+  },
+  searchResultsBox: {
+    maxHeight: 400,
+  },
+  searchEmptyText: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  searchItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SIZES.padding,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  searchItemImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+  },
+  searchItemInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  searchItemName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  searchItemCategory: {
+    fontSize: 12,
+  },
+  searchItemPrice: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  searchCartBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

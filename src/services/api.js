@@ -4,7 +4,6 @@
  */
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppState } from 'react-native';
 
 // ---------- Constants ----------
 
@@ -21,6 +20,8 @@ const ENDPOINTS = {
   FETCH_PRODUCTS: `/api/am/products/v1/fetchProducts/${APP_ID}`, // GET
   FETCH_HOME_PRODUCTS: `/api/am/products/v1/fetchHomeProductsList/${APP_ID}`, // GET
   ADD_PRODUCT: `/api/am/products/v1/addProduct/${APP_ID}`, // POST
+  PLACE_ORDER: `/api/am/orders/v1/orderProducts`, // POST /{userid}/{APP_ID}
+  FETCH_PRODUCTS_BY_CODE: `/api/am/products/v1/fetchProductsByCode/${APP_ID}`, // GET /{code}
 };
 
 // Storage Keys
@@ -53,22 +54,40 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// On 403, refresh admin token and retry once
+// Track whether admin token changed (signals user should re-login)
+let _adminTokenChanged = false;
+
+export function isAdminTokenChanged() {
+  return _adminTokenChanged;
+}
+
+export function resetAdminTokenChanged() {
+  _adminTokenChanged = false;
+}
+
+// On 403 or 500, refresh admin token and retry once
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const status = error.response?.status;
     if (
-      error.response?.status === 403 &&
+      (status === 403 || status === 500) &&
       !originalRequest._retry &&
       !originalRequest.url?.includes(ENDPOINTS.ADMIN_LOGIN)
     ) {
       originalRequest._retry = true;
-      console.log('[API] 403 received, refreshing admin token...');
+      console.log(`[API] ${status} received, refreshing admin token...`);
       await AsyncStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
-      const newToken = await fetchAdminToken();
-      originalRequest.headers.Authorization = `Bearer ${newToken}`;
-      return api(originalRequest);
+      try {
+        const newToken = await fetchAdminToken();
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } catch (tokenError) {
+        console.log('[API] Admin token refresh failed — user should re-login');
+        _adminTokenChanged = true;
+        return Promise.reject(tokenError);
+      }
     }
     return Promise.reject(error);
   }
@@ -94,51 +113,6 @@ export async function getAdminToken() {
   console.log('[API] Fetching fresh admin token...');
   await AsyncStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
   return fetchAdminToken();
-}
-
-// ---------- Periodic Token Refresh ----------
-
-const TOKEN_REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
-let refreshTimer = null;
-let appStateSubscription = null;
-
-export function startAdminTokenRefresh() {
-  stopAdminTokenRefresh();
-
-  // Refresh token every 10 minutes
-  refreshTimer = setInterval(async () => {
-    try {
-      console.log('[API] Periodic admin token refresh...');
-      await AsyncStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
-      await fetchAdminToken();
-    } catch (e) {
-      console.warn('[API] Periodic token refresh failed:', e.message);
-    }
-  }, TOKEN_REFRESH_INTERVAL);
-
-  // Refresh token when app comes back to foreground
-  appStateSubscription = AppState.addEventListener('change', async (nextState) => {
-    if (nextState === 'active') {
-      try {
-        console.log('[API] App foregrounded, refreshing admin token...');
-        await AsyncStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
-        await fetchAdminToken();
-      } catch (e) {
-        console.warn('[API] Foreground token refresh failed:', e.message);
-      }
-    }
-  });
-}
-
-export function stopAdminTokenRefresh() {
-  if (refreshTimer) {
-    clearInterval(refreshTimer);
-    refreshTimer = null;
-  }
-  if (appStateSubscription) {
-    appStateSubscription.remove();
-    appStateSubscription = null;
-  }
 }
 
 async function ensureAdminToken() {
@@ -216,6 +190,25 @@ export async function fetchHomeProducts() {
 export async function addProduct(product) {
   await ensureAdminToken();
   const response = await api.post(ENDPOINTS.ADD_PRODUCT, product);
+  return response.data;
+}
+
+export async function fetchProductsByCode(code) {
+  await ensureAdminToken();
+  const response = await api.get(`${ENDPOINTS.FETCH_PRODUCTS_BY_CODE}/${code}`);
+  return response.data;
+}
+
+// ---------- Orders ----------
+
+export async function placeOrderAPI(userid, orderData) {
+  await ensureAdminToken();
+  console.log('[API] Placing order for userid:', userid);
+  const response = await api.post(
+    `${ENDPOINTS.PLACE_ORDER}/${userid}/${APP_ID}`,
+    orderData
+  );
+  console.log('[API] Place order response:', JSON.stringify(response.data));
   return response.data;
 }
 
