@@ -41,7 +41,8 @@
       "WebFetch(domain:www.aarudhramasala.com)",
       "Bash(npx concurrently:*)",
       "Bash(find:*)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(open:*)"
     ]
   }
 }

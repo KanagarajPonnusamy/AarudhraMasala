@@ -48,8 +48,9 @@ export default function HomeScreen({ navigation }) {
   const allProducts = useMemo(() => {
     const products = [];
     sections.forEach((section, sIdx) => {
-      if (section.type === SECTION_TYPES.LIST && Array.isArray(section.collections)) {
+      if (section?.type === SECTION_TYPES.LIST && Array.isArray(section.collections)) {
         section.collections.forEach((p, i) => {
+          if (!p || typeof p !== 'object') return;
           products.push({
             id: `${sIdx}-${p.id || i}`,
             name: p.productname || '',
@@ -122,75 +123,87 @@ export default function HomeScreen({ navigation }) {
   }, []);
 
   const renderSection = (section, index) => {
-    const { type, title, typecode, collections } = section;
+    try {
+      if (!section || typeof section !== 'object') return null;
+      const { type, title, typecode, collections } = section;
+      const safeCollections = Array.isArray(collections) ? collections : [];
 
-    switch (type) {
-      case SECTION_TYPES.CATEGORY:
-        return (
-          <CategoryList
-            key={`category-${index}`}
-            categories={collections}
-            title={title}
-          />
-        );
+      switch (type) {
+        case SECTION_TYPES.CATEGORY:
+          if (!safeCollections.length) return null;
+          return (
+            <CategoryList
+              key={`category-${index}`}
+              categories={safeCollections}
+              title={title}
+            />
+          );
 
-      case SECTION_TYPES.LIST: {
-        const products = (collections || []).map((p, i) => ({
-          id: `${index}-${p.id || i}`,
-          name: p.productname || '',
-          weight: '',
-          price: p.offerprice || p.productprice || 0,
-          originalPrice: p.productprice || 0,
-          rating: 4.5,
-          reviews: 0,
-          image: p.producturl || '',
-          category: p.productcategory || '',
-          badge: null,
-          productcode: p.productcode || '',
-        }));
-        return (
-          <ProductSection
-            key={`list-${index}`}
-            title={title}
-            products={products}
-            typecode={typecode}
-          />
-        );
-      }
+        case SECTION_TYPES.LIST: {
+          if (!safeCollections.length) return null;
+          const products = safeCollections.map((p, i) => ({
+            id: `${index}-${p?.id || i}`,
+            name: p?.productname || '',
+            weight: '',
+            price: p?.offerprice || p?.productprice || 0,
+            originalPrice: p?.productprice || 0,
+            rating: 4.5,
+            reviews: 0,
+            image: p?.producturl || '',
+            category: p?.productcategory || '',
+            badge: null,
+            productcode: p?.productcode || '',
+          }));
+          return (
+            <ProductSection
+              key={`list-${index}`}
+              title={title}
+              products={products}
+              typecode={typecode}
+            />
+          );
+        }
 
-      case SECTION_TYPES.PROMO:
-        return (
-          <PromoBanner
-            key={`promo-${index}`}
-            promos={collections}
-          />
-        );
+        case SECTION_TYPES.PROMO:
+          return (
+            <PromoBanner
+              key={`promo-${index}`}
+              promos={safeCollections}
+            />
+          );
 
-      case SECTION_TYPES.FOOTER: {
-        const items = collections || [];
-        return (
-          <View key={`footer-${index}`} style={[styles.footer, { borderTopColor: theme.border }]}>
-            <View style={styles.footerLogoContainer}>
-              <Text style={[styles.footerLogoText, { color: theme.primary }]}>Aarudhra</Text>
-              <Text style={[styles.footerLogoSub, { color: theme.primary }]}>MASALA</Text>
+        case SECTION_TYPES.FOOTER: {
+          return (
+            <View key={`footer-${index}`} style={[styles.footer, { borderTopColor: theme.border }]}>
+              <View style={styles.footerLogoContainer}>
+                <Text style={[styles.footerLogoText, { color: theme.primary }]}>Aarudhra</Text>
+                <Text style={[styles.footerLogoSub, { color: theme.primary }]}>MASALA</Text>
+              </View>
+              {safeCollections.map((item, i) => {
+                const text = typeof item === 'string' ? item : String(item?.pageval ?? '');
+                if (!text) return null;
+                return (
+                  <Text key={item?.id || i} style={styles.footerText}>{text}</Text>
+                );
+              })}
             </View>
-            {items.map((item, i) => (
-              <Text key={item.id || i} style={styles.footerText}>{item.pageval || item}</Text>
-            ))}
-          </View>
-        );
+          );
+        }
+
+        case SECTION_TYPES.BANNER:
+          return (
+            <BannerSection
+              key={`banner-${index}`}
+              banners={safeCollections}
+            />
+          );
+
+        default:
+          return null;
       }
-
-      case SECTION_TYPES.BANNER:
-        return (
-          <BannerSection
-            key={`banner-${index}`}
-            banners={collections}
-          />
-        );
-
-      default:
-        return null;
+    } catch (e) {
+      console.warn('Failed to render section:', e.message);
+      return null;
     }
   };
 

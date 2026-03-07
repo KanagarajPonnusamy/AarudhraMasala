@@ -87,9 +87,9 @@ function BannerItem({ item, width }) {
 
     let fgBgColor = null;
     if (item.fg_clr) {
-      fgBgColor = item.fg_clr.length <= 7 ? `${item.fg_clr}80` : item.fg_clr;
+      fgBgColor = item.fg_clr.length <= 7 ? `${item.fg_clr}73` : item.fg_clr;
     } else if (item.fg_txt) {
-      fgBgColor = 'rgba(0,0,0,0.7)';
+      fgBgColor = 'rgba(0,0,0,0.45)';
     }
 
     const fgContainerStyle = [

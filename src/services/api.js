@@ -108,10 +108,14 @@ async function fetchAdminToken() {
   return String(token);
 }
 
-// Always fetch a fresh admin token (never rely on cached/stale token)
+// Use cached admin token if available; only fetch when missing
 export async function getAdminToken() {
-  console.log('[API] Fetching fresh admin token...');
-  await AsyncStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
+  const cached = await AsyncStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
+  if (cached) {
+    console.log('[API] Using cached admin token');
+    return cached;
+  }
+  console.log('[API] No cached token, fetching fresh admin token...');
   return fetchAdminToken();
 }
 
