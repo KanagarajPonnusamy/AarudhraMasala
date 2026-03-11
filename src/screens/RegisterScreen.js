@@ -265,6 +265,14 @@ export default function RegisterScreen({ navigation }) {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Cancel */}
+          <TouchableOpacity
+            style={styles.cancelBtn}
+            onPress={() => navigation.navigate('Main')}
+          >
+            <Text style={[styles.cancelText, { color: theme.textSecondary }]}>Cancel</Text>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -405,6 +413,14 @@ const styles = StyleSheet.create({
   },
   socialText: {
     fontSize: 14,
+    fontWeight: '600',
+  },
+  cancelBtn: {
+    alignSelf: 'center',
+    marginTop: 16,
+  },
+  cancelText: {
+    fontSize: 15,
     fontWeight: '600',
   },
   footer: {

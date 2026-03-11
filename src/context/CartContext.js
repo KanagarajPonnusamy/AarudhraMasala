@@ -73,6 +73,7 @@ export function CartProvider({ children }) {
         quantity: item.quantity,
         productprice: String(item.price),
         productcode: item.productcode || '',
+        productname: item.name || '',
       })),
     };
   }, [cartItems, cartTotal]);

@@ -10,7 +10,7 @@ import { useCart } from '../context/CartContext';
 import { useFavourites } from '../context/FavouriteContext';
 import { SIZES } from '../constants/theme';
 
-export default function ProductCard({ product, style }) {
+export default function ProductCard({ product, style, onPress }) {
   const { theme } = useTheme();
   const { addToCart, removeFromCart, isInCart } = useCart();
   const { toggleFavourite, isFavourite } = useFavourites();
@@ -29,6 +29,7 @@ export default function ProductCard({ product, style }) {
   return (
     <TouchableOpacity
       activeOpacity={0.8}
+      onPress={onPress}
       style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border, shadowColor: theme.shadowColor }, style]}
     >
       <View style={styles.imageContainer}>

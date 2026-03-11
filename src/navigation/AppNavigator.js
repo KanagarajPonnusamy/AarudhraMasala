@@ -17,6 +17,7 @@ import SearchScreen from '../screens/SearchScreen';
 import FavouritesScreen from '../screens/FavouritesScreen';
 import AboutScreen from '../screens/AboutScreen';
 import ProductListScreen from '../screens/ProductListScreen';
+import ProductDetailScreen from '../screens/ProductDetailScreen';
 import CustomDrawer from '../components/CustomDrawer';
 import WebContainer from '../components/WebContainer';
 import { useTheme } from '../context/ThemeContext';
@@ -101,6 +102,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="ProductList"
             component={ProductListScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="ProductDetail"
+            component={ProductDetailScreen}
             options={{ animation: 'slide_from_right' }}
           />
         </Stack.Navigator>

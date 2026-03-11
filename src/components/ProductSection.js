@@ -38,7 +38,10 @@ export default function ProductSection({ title, products, typecode }) {
       <View style={styles.grid}>
         {products.map((item) => (
           <View key={item.id} style={{ width: cardWidth }}>
-            <ProductCard product={item} />
+            <ProductCard
+              product={item}
+              onPress={() => item.productId && navigation.navigate('ProductDetail', { productId: item.productId })}
+            />
           </View>
         ))}
       </View>

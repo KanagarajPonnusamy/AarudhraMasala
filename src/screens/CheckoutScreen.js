@@ -133,11 +133,41 @@ export default function CheckoutScreen({ navigation }) {
       userid,
     }));
 
+    // Capture cart data before clearing
+    const originalTotal = cartItems.reduce(
+      (sum, item) => sum + (item.originalPrice || item.price) * item.quantity,
+      0
+    );
+    const itemsList = cartItems.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+
     setPlacing(true);
     try {
-      await placeOrder(order);
+      const result = await placeOrder(order);
       clearCart();
-      navigation.replace('OrderSuccess');
+      navigation.replace('OrderSuccess', {
+        orderId: result?.orderid || result?.id || '',
+        firstName: user?.firstname || '',
+        email: user?.email || '',
+        phone: user?.phone || user?.mobile || '',
+        address: {
+          name: `${user?.firstname || ''} ${user?.lastname || ''}`.trim(),
+          building,
+          street1,
+          street2,
+          city,
+          pincode,
+          state,
+          country,
+        },
+        totalAmount: cartTotal,
+        originalAmount: originalTotal,
+        paymentMethod: 'Cash on Delivery',
+        items: itemsList,
+      });
     } catch (e) {
       console.log('[Checkout] Place order failed:', e.response?.status, JSON.stringify(e.response?.data));
       Alert.alert(

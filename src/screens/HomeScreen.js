@@ -53,6 +53,7 @@ export default function HomeScreen({ navigation }) {
           if (!p || typeof p !== 'object') return;
           products.push({
             id: `${sIdx}-${p.id || i}`,
+            productId: p.id,
             name: p.productname || '',
             weight: '',
             price: p.offerprice || p.productprice || 0,
@@ -143,6 +144,7 @@ export default function HomeScreen({ navigation }) {
           if (!safeCollections.length) return null;
           const products = safeCollections.map((p, i) => ({
             id: `${index}-${p?.id || i}`,
+            productId: p?.id,
             name: p?.productname || '',
             weight: '',
             price: p?.offerprice || p?.productprice || 0,

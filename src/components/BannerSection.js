@@ -25,6 +25,24 @@ const DEFAULT_HEIGHT_RATIO = 0.4;
 const DEFAULT_FG_PADDING = 20;
 
 /**
+ * Detect if current device is mobile: native iOS/Android,
+ * mobile web browser, or browser responsive/device emulation mode.
+ */
+function isMobileDevice(screenWidth) {
+  // Native apps are always mobile
+  if (Platform.OS !== 'web') return true;
+  // On web: check user agent for mobile browsers / device emulation
+  if (typeof navigator !== 'undefined' && navigator.userAgent) {
+    const ua = navigator.userAgent;
+    if (/Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry|Opera Mini|IEMobile/i.test(ua)) {
+      return true;
+    }
+  }
+  // Fallback: narrow viewport = mobile
+  return screenWidth < 768;
+}
+
+/**
  * Parse a single "key: \"value\"" pageval string into [key, value].
  * e.g. 'bg_clr: "#108474"' → ['bg_clr', '#108474']
  */
@@ -62,8 +80,10 @@ function parseBannerCollections(collections) {
   return Object.keys(obj).length > 0 ? obj : null;
 }
 
-function BannerItem({ item, width }) {
-  const heightRatio = item.heightRatio > 0 ? item.heightRatio : DEFAULT_HEIGHT_RATIO;
+function BannerItem({ item, width, isMobile }) {
+  const heightRatio = isMobile
+    ? (item.heightMobileRatio > 0 ? item.heightMobileRatio : (item.heightRatio > 0 ? item.heightRatio : DEFAULT_HEIGHT_RATIO))
+    : (item.heightRatio > 0 ? item.heightRatio : DEFAULT_HEIGHT_RATIO);
   const bgHeight = Math.round(width * heightRatio);
   const hasFgRatio = item.fg_ratio > 0;
   const fgWidth = hasFgRatio ? Math.round(width * item.fg_ratio) : null;
@@ -166,6 +186,7 @@ export default function BannerSection({ banners }) {
     ? SIZES.maxWidth
     : screenWidth;
   const cardWidth = contentWidth - SIZES.padding * 2;
+  const isMobile = isMobileDevice(screenWidth);
 
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef(null);
@@ -245,7 +266,7 @@ export default function BannerSection({ banners }) {
       <Animated.FlatList
         ref={flatListRef}
         data={items}
-        renderItem={({ item }) => <BannerItem item={item} width={cardWidth} />}
+        renderItem={({ item }) => <BannerItem item={item} width={cardWidth} isMobile={isMobile} />}
         keyExtractor={(item) => item._key}
         horizontal
         showsHorizontalScrollIndicator={false}

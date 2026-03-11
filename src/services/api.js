@@ -21,7 +21,9 @@ const ENDPOINTS = {
   FETCH_HOME_PRODUCTS: `/api/am/products/v1/fetchHomeProductsList/${APP_ID}`, // GET
   ADD_PRODUCT: `/api/am/products/v1/addProduct/${APP_ID}`, // POST
   PLACE_ORDER: `/api/am/orders/v1/orderProducts`, // POST /{userid}/{APP_ID}
+  FETCH_ORDERS: `/api/am/orders/v1/fetchOrders`, // GET /{userid}/{APP_ID}
   FETCH_PRODUCTS_BY_CODE: `/api/am/products/v1/fetchProductsByCode/${APP_ID}`, // GET /{code}
+  FETCH_PRODUCT: `/api/am/products/v1/fetchProduct`, // GET /{id}/{APP_ID}
 };
 
 // Storage Keys
@@ -203,6 +205,12 @@ export async function fetchProductsByCode(code) {
   return response.data;
 }
 
+export async function fetchProduct(id) {
+  await ensureAdminToken();
+  const response = await api.get(`${ENDPOINTS.FETCH_PRODUCT}/${id}/${APP_ID}`);
+  return response.data;
+}
+
 // ---------- Orders ----------
 
 export async function placeOrderAPI(userid, orderData) {
@@ -213,6 +221,16 @@ export async function placeOrderAPI(userid, orderData) {
     orderData
   );
   console.log('[API] Place order response:', JSON.stringify(response.data));
+  return response.data;
+}
+
+export async function fetchOrdersAPI(userid) {
+  await ensureAdminToken();
+  console.log('[API] Fetching orders for userid:', userid);
+  const response = await api.get(
+    `${ENDPOINTS.FETCH_ORDERS}/${userid}/${APP_ID}`
+  );
+  console.log('[API] Fetch orders response:', JSON.stringify(response.data));
   return response.data;
 }
 

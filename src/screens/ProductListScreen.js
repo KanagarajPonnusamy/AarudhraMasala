@@ -47,6 +47,7 @@ export default function ProductListScreen({ navigation, route }) {
           setProducts(
             data.map((p, i) => ({
               id: String(p.id || i),
+              productId: p.id,
               name: p.productname || '',
               weight: '',
               price: p.offerprice || p.productprice || 0,
@@ -109,7 +110,10 @@ export default function ProductListScreen({ navigation, route }) {
           <View style={styles.grid}>
             {products.map((item) => (
               <View key={item.id} style={{ width: cardWidth }}>
-                <ProductCard product={item} />
+                <ProductCard
+                  product={item}
+                  onPress={() => item.productId && navigation.navigate('ProductDetail', { productId: item.productId })}
+                />
               </View>
             ))}
           </View>

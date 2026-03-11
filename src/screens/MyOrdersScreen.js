@@ -2,7 +2,7 @@
  * Created by: Kanagaraj P
  * Created on: 03-03-2026
  */
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,14 +11,17 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useOrders } from '../context/OrderContext';
+import { useAuth } from '../context/AuthContext';
 import { SIZES } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
 
 function formatDate(isoString) {
+  if (!isoString) return '—';
   const d = new Date(isoString);
   const day = String(d.getDate()).padStart(2, '0');
   const mon = String(d.getMonth() + 1).padStart(2, '0');
@@ -29,22 +32,108 @@ function formatDate(isoString) {
 }
 
 function statusColor(status) {
-  switch (status) {
-    case 'Confirmed':
+  switch ((status || '').toUpperCase()) {
+    case 'ORDER PLACED':
+    case 'BOOKED':
+      return '#F59E0B';
+    case 'CONFIRMED':
       return '#10B981';
-    case 'Shipped':
+    case 'SHIPPED':
       return '#3B82F6';
-    case 'Delivered':
+    case 'OUT FOR DELIVERY':
+    case 'OUT_FOR_DELIVERY':
+      return '#8B5CF6';
+    case 'DELIVERED':
       return '#6366F1';
-    case 'Cancelled':
+    case 'CANCELLED':
       return '#EF4444';
     default:
       return '#6B7280';
   }
 }
 
+const TRACKER_STEPS = [
+  'Order Placed',
+  'Confirmed',
+  'Shipped',
+  'Out for Delivery',
+  'Delivered',
+];
+
+function ShippingTracker({ status, theme }) {
+  const upper = (status || '').toUpperCase();
+  const currentIndex = TRACKER_STEPS.findIndex(
+    (s) => s.toUpperCase() === upper
+  );
+
+  return (
+    <View style={trackerStyles.container}>
+      {/* Dots and lines */}
+      <View style={trackerStyles.dotsRow}>
+        {TRACKER_STEPS.map((step, idx) => {
+          const isCompleted = idx < currentIndex;
+          const isCurrent = idx === currentIndex;
+          const filled = isCompleted || isCurrent;
+
+          return (
+            <React.Fragment key={step}>
+              {idx > 0 && (
+                <View
+                  style={[
+                    trackerStyles.line,
+                    {
+                      backgroundColor: idx <= currentIndex
+                        ? theme.primary
+                        : theme.border,
+                    },
+                  ]}
+                />
+              )}
+              <View
+                style={[
+                  trackerStyles.dot,
+                  filled
+                    ? { backgroundColor: theme.primary }
+                    : {
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderColor: theme.border,
+                      },
+                ]}
+              />
+            </React.Fragment>
+          );
+        })}
+      </View>
+
+      {/* Labels */}
+      <View style={trackerStyles.labelsRow}>
+        {TRACKER_STEPS.map((step, idx) => {
+          const isCurrent = idx === currentIndex;
+          return (
+            <Text
+              key={step}
+              style={[
+                trackerStyles.label,
+                {
+                  color: isCurrent ? theme.primary : theme.textSecondary,
+                  fontWeight: isCurrent ? '700' : '400',
+                },
+              ]}
+              numberOfLines={2}
+            >
+              {step}
+            </Text>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 function OrderCard({ order, theme }) {
   const itemCount = order.orderdetails?.length || 0;
+  const isCancelled = order.orderstatus === 'CANCELLED' || order.status === 'Cancelled';
 
   return (
     <View
@@ -56,7 +145,9 @@ function OrderCard({ order, theme }) {
       {/* Order Header */}
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.orderId, { color: theme.text }]}>{order.id}</Text>
+          <Text style={[styles.orderId, { color: theme.text }]}>
+            {order.id}
+          </Text>
           <Text style={[styles.orderDate, { color: theme.textSecondary }]}>
             {formatDate(order.placed_at)}
           </Text>
@@ -64,22 +155,42 @@ function OrderCard({ order, theme }) {
         <View
           style={[
             styles.statusBadge,
-            { backgroundColor: statusColor(order.status) + '18' },
+            { backgroundColor: statusColor(order.orderstatus) + '18' },
           ]}
         >
           <View
             style={[
               styles.statusDot,
-              { backgroundColor: statusColor(order.status) },
+              { backgroundColor: statusColor(order.orderstatus) },
             ]}
           />
           <Text
-            style={[styles.statusText, { color: statusColor(order.status) }]}
+            style={[styles.statusText, { color: statusColor(order.orderstatus) }]}
           >
-            {order.status}
+            {order.orderstatus}
           </Text>
         </View>
       </View>
+
+      {/* Tracking Number */}
+      {order.trackingno ? (
+        <View style={[styles.trackingRow, { borderTopColor: theme.border }]}>
+          <Feather name="truck" size={14} color={theme.primary} />
+          <Text style={[styles.trackingLabel, { color: theme.textSecondary }]}>
+            Tracking:
+          </Text>
+          <Text style={[styles.trackingNo, { color: theme.primary }]}>
+            {order.trackingno}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Shipping Tracker */}
+      {!isCancelled && (
+        <View style={[styles.trackerSection, { borderTopColor: theme.border }]}>
+          <ShippingTracker status={order.shippingstatus || order.status} theme={theme} />
+        </View>
+      )}
 
       {/* Items Summary */}
       <View style={[styles.itemsRow, { borderTopColor: theme.border }]}>
@@ -92,14 +203,14 @@ function OrderCard({ order, theme }) {
         </Text>
       </View>
 
-      {/* Product list */}
+      {/* Product details list */}
       {order.orderdetails?.map((detail, idx) => (
         <View key={idx} style={styles.productRow}>
           <Text
             style={[styles.productName, { color: theme.text }]}
             numberOfLines={1}
           >
-            {detail.productName || detail.productcode}
+            {detail.productname || detail.productcode}
           </Text>
           <Text style={[styles.productQty, { color: theme.textSecondary }]}>
             x{detail.quantity}
@@ -117,10 +228,10 @@ function OrderCard({ order, theme }) {
           style={[styles.addressText, { color: theme.textSecondary }]}
           numberOfLines={1}
         >
-          {order.order?.shippingaddress || '—'}
+          {order.shippingaddress || '—'}
         </Text>
         <Text style={[styles.totalAmount, { color: theme.primary }]}>
-          ₹{order.order?.total_amount}
+          ₹{order.total_amount}
         </Text>
       </View>
     </View>
@@ -129,7 +240,23 @@ function OrderCard({ order, theme }) {
 
 export default function MyOrdersScreen({ navigation }) {
   const { theme } = useTheme();
-  const { orders, loading } = useOrders();
+  const { orders, loading, fetchOrders } = useOrders();
+  const { user } = useAuth();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (user?.user_id) {
+      fetchOrders(user.user_id);
+    }
+  }, [user?.user_id]);
+
+  const onRefresh = useCallback(async () => {
+    if (!user?.user_id) return;
+    setRefreshing(true);
+    await fetchOrders(user.user_id);
+    setRefreshing(false);
+  }, [user?.user_id, fetchOrders]);
 
   const renderItem = ({ item }) => <OrderCard order={item} theme={theme} />;
 
@@ -166,7 +293,24 @@ export default function MyOrdersScreen({ navigation }) {
           <View style={{ width: 32 }} />
         </View>
 
-        {loading ? (
+        {!user ? (
+          <View style={styles.loginContainer}>
+            <Feather name="lock" size={48} color={theme.textSecondary} />
+            <Text style={[styles.loginTitle, { color: theme.text }]}>
+              Login Required
+            </Text>
+            <Text style={[styles.loginSubtitle, { color: theme.textSecondary }]}>
+              Please login to view your orders
+            </Text>
+            <TouchableOpacity
+              style={[styles.loginBtn, { backgroundColor: theme.primary }]}
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Feather name="log-in" size={18} color="#FFF" />
+              <Text style={styles.loginBtnText}>Login</Text>
+            </TouchableOpacity>
+          </View>
+        ) : loading ? (
           <View style={styles.loaderContainer}>
             <ActivityIndicator size="large" color={theme.primary} />
           </View>
@@ -174,17 +318,56 @@ export default function MyOrdersScreen({ navigation }) {
           <FlatList
             data={orders}
             renderItem={renderItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => String(item.id)}
             contentContainerStyle={
               orders.length === 0 ? styles.emptyList : styles.listContent
             }
             ListEmptyComponent={renderEmpty}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme.primary]}
+                tintColor={theme.primary}
+              />
+            }
           />
         )}
     </SafeAreaView>
   );
 }
+
+const trackerStyles = StyleSheet.create({
+  container: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  line: {
+    flex: 1,
+    height: 3,
+    borderRadius: 1.5,
+  },
+  labelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  label: {
+    fontSize: 9,
+    textAlign: 'center',
+    width: 56,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -203,6 +386,36 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
+    fontWeight: '700',
+  },
+  loginContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: SIZES.padding,
+  },
+  loginTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  loginSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  loginBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: SIZES.radius,
+    marginTop: 8,
+  },
+  loginBtnText: {
+    color: '#FFF',
+    fontSize: 16,
     fontWeight: '700',
   },
   loaderContainer: {
@@ -252,6 +465,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  trackingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    gap: 6,
+  },
+  trackingLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  trackingNo: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  trackerSection: {
+    borderTopWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
   itemsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -282,6 +516,7 @@ const styles = StyleSheet.create({
   },
   productQty: {
     fontSize: 13,
+    color: '#6B7280',
   },
   productPrice: {
     fontSize: 13,
