@@ -5,6 +5,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import {
   getAdminToken,
+  refreshAdminTokenForUser,
   loginUser,
   logoutUser,
   registerUser,
@@ -31,21 +32,23 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // On app start: fetch fresh admin token + restore saved user
+  // On app start: restore saved user, then fetch admin token (with user-id if logged in)
   useEffect(() => {
     (async () => {
+      let storedUser = null;
       try {
-        await getAdminToken();
+        storedUser = await getStoredUser();
+        if (storedUser) setUser(storedUser);
+      } catch (e) {
+        console.warn('Restore user failed:', e.message);
+      }
+      try {
+        const userId = storedUser?.user_id || storedUser?.id;
+        await getAdminToken(userId);
         setAdminTokenReady(true);
       } catch (e) {
         console.warn('Admin token fetch failed:', e.message);
         setAdminTokenReady(true);
-      }
-      try {
-        const stored = await getStoredUser();
-        if (stored) setUser(stored);
-      } catch (e) {
-        console.warn('Restore user failed:', e.message);
       }
       setIsLoading(false);
     })();
@@ -78,6 +81,11 @@ export function AuthProvider({ children }) {
     };
     setUser(userData);
     await saveUser(userData);
+    // Re-fetch admin token with user-id now that user is logged in
+    const userId = userData.user_id;
+    if (userId) {
+      await refreshAdminTokenForUser(userId);
+    }
     resetAdminTokenChanged();
     return userData;
   };

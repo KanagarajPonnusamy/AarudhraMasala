@@ -42,7 +42,14 @@
       "Bash(npx concurrently:*)",
       "Bash(find:*)",
       "Bash(npx:*)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "WebFetch(domain:www.satturmittaikadai.com)",
+      "Bash(yes:*)",
+      "Bash(adb devices:*)",
+      "Bash(adb shell am start:*)",
+      "Bash(adb logcat:*)",
+      "Bash(adb shell am:*)",
+      "Bash(/Users/sivakrishna/Kanagaraj/_backup/MyApps/AarudhraMasala/proxy-server.js << 'PROXYEOF'\nconst http = require\\('http'\\);\nconst https = require\\('https'\\);\nconst url = require\\('url'\\);\n\nconst PORT = 3001;\nconst TARGET = 'https://www.aarudhramasala.com';\n\nconst server = http.createServer\\(\\(req, res\\) => {\n  res.setHeader\\('Access-Control-Allow-Origin', '*'\\);\n  res.setHeader\\('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'\\);\n  res.setHeader\\('Access-Control-Allow-Headers', 'Content-Type, Authorization'\\);\n\n  if \\(req.method === 'OPTIONS'\\) {\n    res.writeHead\\(204\\);\n    res.end\\(\\);\n    return;\n  }\n\n  const parsed = url.parse\\(req.url\\);\n  const options = {\n    hostname: 'www.aarudhramasala.com',\n    port: 443,\n    path: parsed.path,\n    method: req.method,\n    headers: { ...req.headers, host: 'www.aarudhramasala.com' },\n  };\n\n  const proxyReq = https.request\\(options, \\(proxyRes\\) => {\n    res.writeHead\\(proxyRes.statusCode, proxyRes.headers\\);\n    proxyRes.pipe\\(res\\);\n  }\\);\n\n  proxyReq.on\\('error', \\(err\\) => {\n    console.error\\('Proxy error:', err.message\\);\n    res.writeHead\\(502\\);\n    res.end\\('Proxy error'\\);\n  }\\);\n\n  req.pipe\\(proxyReq\\);\n}\\);\n\nserver.listen\\(PORT, \\(\\) => {\n  console.log\\('CORS proxy running at http://localhost:' + PORT + ' -> ' + TARGET\\);\n}\\);\nPROXYEOF)"
     ]
   }
 }
