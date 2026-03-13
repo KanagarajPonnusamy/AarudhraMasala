@@ -11,7 +11,7 @@ import ProductCard from './ProductCard';
 
 const GAP = 20;
 
-export default function ProductSection({ title, products, typecode }) {
+function ProductSection({ title, products, typecode }) {
   const { theme } = useTheme();
   const navigation = useNavigation();
   const { width: screenWidth } = useWindowDimensions();
@@ -48,6 +48,8 @@ export default function ProductSection({ title, products, typecode }) {
     </View>
   );
 }
+
+export default React.memo(ProductSection);
 
 const styles = StyleSheet.create({
   container: {

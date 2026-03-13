@@ -7,19 +7,23 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   ScrollView,
-  SafeAreaView,
   ActivityIndicator,
   TouchableOpacity,
+  Platform,
+  useWindowDimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import CachedImage from '../components/CachedImage';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../context/ThemeContext';
 import { useCart } from '../context/CartContext';
 import { useFavourites } from '../context/FavouriteContext';
 import { fetchProduct } from '../services/api';
 import { SIZES } from '../constants/theme';
+
+const WIDE_BREAKPOINT = 768;
 
 export default function ProductDetailScreen({ navigation, route }) {
   const { productId } = route.params;
@@ -29,6 +33,8 @@ export default function ProductDetailScreen({ navigation, route }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { width: screenWidth } = useWindowDimensions();
+  const isWide = Platform.OS === 'web' && screenWidth >= WIDE_BREAKPOINT;
 
   useEffect(() => {
     let mounted = true;
@@ -91,109 +97,130 @@ export default function ProductDetailScreen({ navigation, route }) {
     ? Math.round(((product.productprice - product.offerprice) / product.productprice) * 100)
     : 0;
 
+  const imageSection = (
+    <View style={[styles.imageContainer, { backgroundColor: theme.card }, isWide && styles.imageContainerWide]}>
+      <View style={[styles.imageWrapper, isWide && styles.imageWrapperWide]}>
+        {discount > 0 && (
+          <View style={[styles.discountBadge, { backgroundColor: theme.accent }]}>
+            <Text style={styles.discountText}>-{discount}%</Text>
+          </View>
+        )}
+        <CachedImage source={{ uri: product.producturl }} style={[styles.productImage, isWide && styles.productImageWide]} />
+        {!isWide && (
+          <TouchableOpacity
+            style={[styles.wishlistBtn, { backgroundColor: liked ? theme.accent : theme.surface }]}
+            onPress={() => toggleFavourite(cartItem)}
+          >
+            <Feather name="heart" size={20} color={liked ? '#FFF' : theme.textSecondary} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  const infoSection = (
+    <View style={[styles.infoSection, isWide && styles.infoSectionWide]}>
+      {/* Product Name - shown in info section on web */}
+      {isWide && (
+        <View style={styles.webNameRow}>
+          <Text style={[styles.webProductName, { color: theme.text }]}>
+            {product.productname}
+          </Text>
+          <TouchableOpacity
+            style={[styles.webWishlistBtn, { backgroundColor: liked ? theme.accent : theme.surface }]}
+            onPress={() => toggleFavourite(cartItem)}
+          >
+            <Feather name="heart" size={20} color={liked ? '#FFF' : theme.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Description snippet on web (above price like reference) */}
+      {isWide && product.description ? (
+        <Text style={[styles.webDescriptionSnippet, { color: theme.textSecondary }]} numberOfLines={3}>
+          {product.description}
+        </Text>
+      ) : null}
+
+      {/* Price */}
+      <View style={[styles.priceRow, isWide && styles.priceRowWide]}>
+        <Text style={[styles.price, { color: theme.primary }, isWide && styles.priceWide]}>
+          Rs. {product.offerprice || product.productprice}
+        </Text>
+        {discount > 0 && (
+          <Text style={[styles.originalPrice, { color: theme.textSecondary }]}>
+            ₹{product.productprice}
+          </Text>
+        )}
+        {discount > 0 && (
+          <View style={[styles.saveBadge, { backgroundColor: theme.accent + '20' }]}>
+            <Text style={[styles.saveText, { color: theme.accent }]}>
+              Save ₹{product.productprice - product.offerprice}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Add to Cart */}
+      <TouchableOpacity
+        style={[
+          styles.cartButton,
+          isWide && styles.cartButtonWide,
+          inCart
+            ? { borderColor: theme.accent, backgroundColor: theme.accent }
+            : { borderColor: theme.primary, backgroundColor: theme.primary },
+        ]}
+        onPress={() => inCart ? removeFromCart(String(product.id)) : addToCart(cartItem)}
+      >
+        <Feather
+          name={inCart ? 'x-circle' : 'shopping-cart'}
+          size={14}
+          color="#FFF"
+        />
+        <Text style={[styles.cartButtonText, { color: '#FFF' }]}>
+          {inCart ? 'Remove' : 'Add to Cart'}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Divider */}
+      <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+      {/* Description */}
+      <View style={styles.detailSection}>
+        <Text style={[styles.detailLabel, { color: theme.text }]}>Description</Text>
+        <Text style={[styles.detailValue, { color: theme.textSecondary }]}>
+          {product.description || 'Description not available'}
+        </Text>
+      </View>
+
+      {/* Manufacturer */}
+      <View style={[styles.detailSection, { marginTop: 25 }]}>
+        <Text style={[styles.detailLabel, { color: theme.text }]}>Manufacturer</Text>
+        <Text style={[styles.detailValue, { color: theme.textSecondary }]}>
+          {product.manufacturer || 'Not specified'}
+        </Text>
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar style={theme.isDark ? 'light' : 'dark'} />
-      <Header theme={theme} navigation={navigation} title={product.productcategory} />
+      <Header theme={theme} navigation={navigation} title={product.productname} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Product Image */}
-        <View style={[styles.imageContainer, { backgroundColor: theme.card }]}>
-          <View style={styles.imageWrapper}>
-            {discount > 0 && (
-              <View style={[styles.discountBadge, { backgroundColor: theme.accent }]}>
-                <Text style={styles.discountText}>-{discount}%</Text>
-              </View>
-            )}
-            <Image source={{ uri: product.producturl }} style={styles.productImage} />
-            <TouchableOpacity
-              style={[styles.wishlistBtn, { backgroundColor: liked ? theme.accent : theme.surface }]}
-              onPress={() => toggleFavourite(cartItem)}
-            >
-              <Feather name="heart" size={20} color={liked ? '#FFF' : theme.textSecondary} />
-            </TouchableOpacity>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, isWide && styles.scrollContentWide]}>
+        {isWide ? (
+          <View style={styles.wideLayout}>
+            {imageSection}
+            {infoSection}
           </View>
-        </View>
-
-        {/* Add to Cart */}
-        <TouchableOpacity
-          style={[
-            styles.cartButton,
-            inCart
-              ? { borderColor: theme.accent, backgroundColor: theme.accent }
-              : { borderColor: theme.primary, backgroundColor: 'transparent' },
-          ]}
-          onPress={() => inCart ? removeFromCart(String(product.id)) : addToCart(cartItem)}
-        >
-          <Feather
-            name={inCart ? 'x-circle' : 'shopping-cart'}
-            size={14}
-            color={inCart ? '#FFF' : theme.primary}
-          />
-          <Text
-            style={[
-              styles.cartButtonText,
-              { color: inCart ? '#FFF' : theme.primary },
-            ]}
-          >
-            {inCart ? 'Remove' : 'Add to Cart'}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Product Info */}
-        <View style={styles.infoSection}>
-          <Text style={[styles.productName, { color: theme.text }]}>
-            {product.productname}
-          </Text>
-
-          {/* Price */}
-          <View style={styles.priceRow}>
-            <Text style={[styles.price, { color: theme.primary }]}>
-              ₹{product.offerprice || product.productprice}
-            </Text>
-            {discount > 0 && (
-              <Text style={[styles.originalPrice, { color: theme.textSecondary }]}>
-                ₹{product.productprice}
-              </Text>
-            )}
-            {discount > 0 && (
-              <View style={[styles.saveBadge, { backgroundColor: theme.accent + '20' }]}>
-                <Text style={[styles.saveText, { color: theme.accent }]}>
-                  Save ₹{product.productprice - product.offerprice}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Status */}
-          <View style={[styles.statusBadge, { backgroundColor: product.status === 'ACTIVE' ? theme.primary + '15' : theme.badge + '15' }]}>
-            <View style={[styles.statusDot, { backgroundColor: product.status === 'ACTIVE' ? theme.primary : theme.badge }]} />
-            <Text style={[styles.statusText, { color: product.status === 'ACTIVE' ? theme.primary : theme.badge }]}>
-              {product.status === 'ACTIVE' ? 'In Stock' : 'Unavailable'}
-            </Text>
-          </View>
-
-          {/* Divider */}
-          <View style={[styles.divider, { backgroundColor: theme.border }]} />
-
-          {/* Description */}
-          <View style={styles.detailSection}>
-            <Text style={[styles.detailLabel, { color: theme.text }]}>Description</Text>
-            <Text style={[styles.detailValue, { color: theme.textSecondary }]}>
-              {product.description || 'Description not available'}
-            </Text>
-          </View>
-
-          {/* Manufacturer */}
-          <View style={[styles.detailSection, { marginTop: 25 }]}>
-            <Text style={[styles.detailLabel, { color: theme.text }]}>Manufacturer</Text>
-            <Text style={[styles.detailValue, { color: theme.textSecondary }]}>
-              {product.manufacturer || 'Not specified'}
-            </Text>
-          </View>
-        </View>
+        ) : (
+          <>
+            {imageSection}
+            {infoSection}
+          </>
+        )}
       </ScrollView>
-
     </SafeAreaView>
   );
 }
@@ -252,23 +279,46 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 30,
   },
+  scrollContentWide: {
+    paddingHorizontal: 40,
+    paddingTop: 30,
+  },
+  // Wide (web) side-by-side layout
+  wideLayout: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 40,
+  },
+  // Image section
   imageContainer: {
     alignItems: 'center',
     paddingVertical: 24,
   },
+  imageContainerWide: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+    paddingVertical: 0,
+  },
   imageWrapper: {
     width: '80%',
     position: 'relative',
+  },
+  imageWrapperWide: {
+    width: '100%',
   },
   productImage: {
     width: '100%',
     height: 280,
     resizeMode: 'contain',
   },
+  productImageWide: {
+    height: 450,
+  },
   discountBadge: {
     position: 'absolute',
-    top: 0,
-    left: 0,
+    top: 8,
+    left: 8,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
@@ -294,17 +344,44 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  // Info section
   infoSection: {
     padding: SIZES.padding,
     alignItems: 'flex-start',
   },
-  productName: {
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 4,
-    alignSelf: 'center',
-    textAlign: 'center',
+  infoSectionWide: {
+    flex: 1,
+    padding: 0,
+    paddingTop: 8,
   },
+  // Web-specific: name row with wishlist
+  webNameRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+    marginBottom: 8,
+  },
+  webProductName: {
+    flex: 1,
+    fontSize: 26,
+    fontWeight: '800',
+    marginRight: 16,
+  },
+  webWishlistBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  webDescriptionSnippet: {
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  // Price
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -312,12 +389,20 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 12,
   },
+  priceRowWide: {
+    alignSelf: 'flex-start',
+    marginBottom: 20,
+  },
   price: {
-    fontSize: 28,
-    fontWeight: '900',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  priceWide: {
+    fontSize: 20,
+    fontWeight: '700',
   },
   originalPrice: {
-    fontSize: 18,
+    fontSize: 14,
     textDecorationLine: 'line-through',
   },
   saveBadge: {
@@ -328,25 +413,6 @@ const styles = StyleSheet.create({
   saveText: {
     fontSize: 12,
     fontWeight: '700',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
-    marginBottom: 20,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  statusText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
   divider: {
     height: 1,
@@ -378,6 +444,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1.5,
     marginTop: 8,
+  },
+  cartButtonWide: {
+    alignSelf: 'flex-start',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
   },
   cartButtonText: {
     fontSize: 13,

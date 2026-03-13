@@ -2,7 +2,7 @@
  * Created by: Kanagaraj P
  * Created on: 04-03-2026
  */
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 const FavouriteContext = createContext();
 
@@ -36,17 +36,17 @@ export function FavouriteProvider({ children }) {
 
   const favouriteCount = favourites.length;
 
+  const value = useMemo(() => ({
+    favourites,
+    favouriteCount,
+    addToFavourites,
+    removeFromFavourites,
+    toggleFavourite,
+    isFavourite,
+  }), [favourites, favouriteCount, addToFavourites, removeFromFavourites, toggleFavourite, isFavourite]);
+
   return (
-    <FavouriteContext.Provider
-      value={{
-        favourites,
-        favouriteCount,
-        addToFavourites,
-        removeFromFavourites,
-        toggleFavourite,
-        isFavourite,
-      }}
-    >
+    <FavouriteContext.Provider value={value}>
       {children}
     </FavouriteContext.Provider>
   );

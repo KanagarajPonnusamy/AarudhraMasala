@@ -3,14 +3,15 @@
  * Created on: 01-03-2026
  */
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import CachedImage from './CachedImage';
 import { useCart } from '../context/CartContext';
 import { useFavourites } from '../context/FavouriteContext';
 import { SIZES } from '../constants/theme';
 
-export default function ProductCard({ product, style, onPress }) {
+function ProductCard({ product, style, onPress }) {
   const { theme } = useTheme();
   const { addToCart, removeFromCart, isInCart } = useCart();
   const { toggleFavourite, isFavourite } = useFavourites();
@@ -33,7 +34,7 @@ export default function ProductCard({ product, style, onPress }) {
       style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border, shadowColor: theme.shadowColor }, style]}
     >
       <View style={styles.imageContainer}>
-        <Image source={{ uri: product.image }} style={styles.image} />
+        <CachedImage source={{ uri: product.image }} style={styles.image} />
         {product.badge && (
           <View style={[styles.badge, { backgroundColor: theme.primary }]}>
             <Text style={styles.badgeText}>{product.badge}</Text>
@@ -101,6 +102,8 @@ export default function ProductCard({ product, style, onPress }) {
     </TouchableOpacity>
   );
 }
+
+export default React.memo(ProductCard);
 
 const styles = StyleSheet.create({
   card: {

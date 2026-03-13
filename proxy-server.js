@@ -1,35 +1,44 @@
-const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const http = require('http');
+const https = require('https');
+const url = require('url');
 
-const app = express();
 const PORT = 3001;
 const TARGET = 'https://www.aarudhramasala.com';
 
-// Allow all origins for local dev
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+const server = http.createServer((req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+    res.writeHead(204);
+    res.end();
+    return;
   }
-  next();
+
+  const parsed = url.parse(req.url);
+  const options = {
+    hostname: 'www.aarudhramasala.com',
+    port: 443,
+    path: parsed.path,
+    method: req.method,
+    headers: { ...req.headers, host: 'www.aarudhramasala.com' },
+  };
+
+  const proxyReq = https.request(options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on('error', (err) => {
+    console.error('Proxy error:', err.message);
+    res.writeHead(502);
+    res.end('Proxy error');
+  });
+
+  req.pipe(proxyReq);
 });
 
-// Proxy all /am and /api requests to the real server
-app.use(
-  ['/am', '/api'],
-  createProxyMiddleware({
-    target: TARGET,
-    changeOrigin: true,
-    onProxyRes(proxyRes) {
-      proxyRes.headers['Access-Control-Allow-Origin'] = '*';
-    },
-    logLevel: 'debug',
-  })
-);
-
-app.listen(PORT, () => {
-  console.log(`Proxy server running on http://localhost:${PORT}`);
-  console.log(`Proxying /am/* and /api/* -> ${TARGET}`);
+server.listen(PORT, () => {
+  console.log('CORS proxy running at http://localhost:' + PORT + ' -> ' + TARGET);
 });

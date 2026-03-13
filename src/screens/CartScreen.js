@@ -2,17 +2,18 @@
  * Created by: Kanagaraj P
  * Created on: 03-03-2026
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  Image,
   TouchableOpacity,
-  SafeAreaView,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import CachedImage from '../components/CachedImage';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -28,7 +29,7 @@ function CartItem({ item, theme, updateQuantity, removeFromCart }) {
       ]}
     >
       <View style={styles.imageContainer}>
-        <Image source={{ uri: item.image }} style={styles.itemImage} />
+        <CachedImage source={{ uri: item.image }} style={styles.itemImage} />
       </View>
 
       <View style={styles.itemInfo}>
@@ -79,6 +80,8 @@ function CartItem({ item, theme, updateQuantity, removeFromCart }) {
   );
 }
 
+const MemoizedCartItem = React.memo(CartItem);
+
 export default function CartScreen({ navigation }) {
   const { theme } = useTheme();
   const { user } = useAuth();
@@ -93,14 +96,14 @@ export default function CartScreen({ navigation }) {
     }
   };
 
-  const renderItem = ({ item }) => (
-    <CartItem
+  const renderItem = useCallback(({ item }) => (
+    <MemoizedCartItem
       item={item}
       theme={theme}
       updateQuantity={updateQuantity}
       removeFromCart={removeFromCart}
     />
-  );
+  ), [theme, updateQuantity, removeFromCart]);
 
   const renderEmpty = () => (
     <EmptyState
@@ -145,6 +148,10 @@ export default function CartScreen({ navigation }) {
           }
           ListEmptyComponent={renderEmpty}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={Platform.OS !== 'web'}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          initialNumToRender={6}
         />
 
         {/* Order Summary Footer */}

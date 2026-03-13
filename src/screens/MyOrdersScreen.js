@@ -9,10 +9,11 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useOrders } from '../context/OrderContext';
@@ -68,7 +69,6 @@ function ShippingTracker({ status, theme }) {
 
   return (
     <View style={trackerStyles.container}>
-      {/* Dots and lines */}
       <View style={trackerStyles.dotsRow}>
         {TRACKER_STEPS.map((step, idx) => {
           const isCompleted = idx < currentIndex;
@@ -131,6 +131,8 @@ function ShippingTracker({ status, theme }) {
   );
 }
 
+const MemoizedShippingTracker = React.memo(ShippingTracker);
+
 function OrderCard({ order, theme }) {
   const itemCount = order.orderdetails?.length || 0;
   const isCancelled = order.orderstatus === 'CANCELLED' || order.status === 'Cancelled';
@@ -188,7 +190,7 @@ function OrderCard({ order, theme }) {
       {/* Shipping Tracker */}
       {!isCancelled && (
         <View style={[styles.trackerSection, { borderTopColor: theme.border }]}>
-          <ShippingTracker status={order.shippingstatus || order.status} theme={theme} />
+          <MemoizedShippingTracker status={order.shippingstatus || order.status} theme={theme} />
         </View>
       )}
 
@@ -238,6 +240,8 @@ function OrderCard({ order, theme }) {
   );
 }
 
+const MemoizedOrderCard = React.memo(OrderCard);
+
 export default function MyOrdersScreen({ navigation }) {
   const { theme } = useTheme();
   const { orders, loading, fetchOrders } = useOrders();
@@ -258,7 +262,7 @@ export default function MyOrdersScreen({ navigation }) {
     setRefreshing(false);
   }, [user?.user_id, fetchOrders]);
 
-  const renderItem = ({ item }) => <OrderCard order={item} theme={theme} />;
+  const renderItem = useCallback(({ item }) => <MemoizedOrderCard order={item} theme={theme} />, [theme]);
 
   const renderEmpty = () => (
     <EmptyState
@@ -324,6 +328,10 @@ export default function MyOrdersScreen({ navigation }) {
             }
             ListEmptyComponent={renderEmpty}
             showsVerticalScrollIndicator={false}
+            removeClippedSubviews={Platform.OS !== 'web'}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            initialNumToRender={6}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}

@@ -2,7 +2,7 @@
  * Created by: Kanagaraj P
  * Created on: 03-03-2026
  */
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 const CartContext = createContext();
 
@@ -40,11 +40,14 @@ export function CartProvider({ children }) {
     [cartItems]
   );
 
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
+    [cartItems]
+  );
 
-  const cartTotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
+  const cartTotal = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [cartItems]
   );
 
   const clearCart = useCallback(() => {
@@ -78,20 +81,20 @@ export function CartProvider({ children }) {
     };
   }, [cartItems, cartTotal]);
 
+  const value = useMemo(() => ({
+    cartItems,
+    cartCount,
+    cartTotal,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    isInCart,
+    getOrderObject,
+    clearCart,
+  }), [cartItems, cartCount, cartTotal, addToCart, removeFromCart, updateQuantity, isInCart, getOrderObject, clearCart]);
+
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        cartCount,
-        cartTotal,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        isInCart,
-        getOrderObject,
-        clearCart,
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );

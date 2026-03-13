@@ -7,12 +7,12 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   Animated,
   Platform,
   useWindowDimensions,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import CachedImage from './CachedImage';
 import { SIZES } from '../constants/theme';
 import { BANNERS } from '../constants/data';
 
@@ -144,7 +144,7 @@ export default function BannerCarousel() {
         ]}
       >
         <View style={[styles.bannerCard, { backgroundColor: item.color, height: cardHeight }]}>
-          <Image source={{ uri: item.image }} style={[styles.bannerImage, { height: imageHeight }]} />
+          <CachedImage source={{ uri: item.image }} style={[styles.bannerImage, { height: imageHeight }]} contentFit="cover" />
           <View style={styles.bannerTextContainer}>
             <Text style={styles.bannerTitle} numberOfLines={2}>{item.title}</Text>
             <Text style={styles.bannerSubtitle} numberOfLines={2}>{item.subtitle}</Text>

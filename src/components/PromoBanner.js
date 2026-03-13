@@ -7,7 +7,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   Animated,
   Platform,
@@ -15,6 +14,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import CachedImage from './CachedImage';
 import { SIZES } from '../constants/theme';
 
 const AUTO_SCROLL_DELAY = 4000;
@@ -50,6 +50,7 @@ export default function PromoBanner({ promos }) {
 }
 
 const PROMO_COLORS = ['#108474', '#D4A373', '#E76F51', '#8B5E3C', '#6B8E23', '#9B2335'];
+const PromoSeparator = () => <View style={{ width: CARD_SPACING }} />;
 
 function PromoCarousel({ promos, theme }) {
   const { width: screenWidth } = useWindowDimensions();
@@ -170,7 +171,7 @@ function PromoCarousel({ promos, theme }) {
     return (
       <View style={[styles.promoCard, { width: cardWidth, height: cardHeight, backgroundColor: bgColor }]}>
         {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.promoImage} />
+          <CachedImage source={{ uri: imageUri }} style={styles.promoImage} contentFit="cover" />
         ) : (
           <View style={styles.promoIconArea}>
             <View style={styles.promoIconCircle}>
@@ -212,7 +213,7 @@ function PromoCarousel({ promos, theme }) {
         snapToAlignment="start"
         bounces={false}
         contentContainerStyle={{ paddingHorizontal: SIZES.padding }}
-        ItemSeparatorComponent={() => <View style={{ width: CARD_SPACING }} />}
+        ItemSeparatorComponent={PromoSeparator}
         getItemLayout={(_, index) => ({
           length: snapInterval,
           offset: snapInterval * index,

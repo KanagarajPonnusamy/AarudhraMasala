@@ -73,6 +73,7 @@ export function OrderProvider({ children }) {
           shippingstatus: firstShip.status || '',
         };
       });
+      transformed.sort((a, b) => (new Date(b.placed_at || 0)) - (new Date(a.placed_at || 0)));
       setOrders(transformed);
       await AsyncStorage.setItem(ORDERS_KEY, JSON.stringify(transformed));
     } catch (e) {

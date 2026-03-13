@@ -7,7 +7,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   ImageBackground,
   TouchableOpacity,
   Animated,
@@ -16,6 +15,7 @@ import {
   Platform,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import CachedImage from './CachedImage';
 import { SIZES } from '../constants/theme';
 
 const CARD_SPACING = 12;
@@ -122,10 +122,10 @@ function BannerItem({ item, width, isMobile }) {
     return (
       <View style={fgContainerStyle}>
         {item.fg_img ? (
-          <Image
+          <CachedImage
             source={{ uri: item.fg_img }}
             style={styles.fgImage}
-            resizeMode="contain"
+            contentFit="contain"
           />
         ) : null}
         {item.fg_txt ? (

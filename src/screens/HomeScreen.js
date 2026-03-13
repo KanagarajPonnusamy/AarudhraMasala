@@ -9,16 +9,16 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
   TextInput,
   TouchableOpacity,
   FlatList,
-  Image,
   Keyboard,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import CachedImage from '../components/CachedImage';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -122,6 +122,47 @@ export default function HomeScreen({ navigation }) {
       setRefreshing(false);
     }
   }, []);
+
+  const orderedSections = useMemo(() => {
+    const nonFooter = sections.filter((s) => s.type !== SECTION_TYPES.FOOTER);
+    const footers = sections.filter((s) => s.type === SECTION_TYPES.FOOTER);
+    return [...nonFooter, ...footers];
+  }, [sections]);
+
+  const renderSearchItem = useCallback(({ item }) => {
+    const inCart = isInCart(item.id);
+    return (
+      <View style={[styles.searchItem, { borderBottomColor: theme.border }]}>
+        {item.image ? (
+          <CachedImage source={{ uri: item.image }} style={styles.searchItemImage} />
+        ) : (
+          <View style={[styles.searchItemImage, { backgroundColor: theme.inputBg }]} />
+        )}
+        <View style={styles.searchItemInfo}>
+          <Text style={[styles.searchItemName, { color: theme.text }]} numberOfLines={1}>
+            {item.name}
+          </Text>
+          {item.category ? (
+            <Text style={[styles.searchItemCategory, { color: theme.textSecondary }]} numberOfLines={1}>
+              {item.category}
+            </Text>
+          ) : null}
+          <Text style={[styles.searchItemPrice, { color: theme.primary }]}>
+            ₹{item.price}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.searchCartBtn,
+            { backgroundColor: inCart ? theme.badge : theme.primary },
+          ]}
+          onPress={() => inCart ? removeFromCart(item.id) : addToCart(item)}
+        >
+          <Feather name={inCart ? 'check' : 'plus'} size={16} color="#FFF" />
+        </TouchableOpacity>
+      </View>
+    );
+  }, [theme, isInCart, addToCart, removeFromCart]);
 
   const renderSection = (section, index) => {
     try {
@@ -227,12 +268,8 @@ export default function HomeScreen({ navigation }) {
               Loading...
             </Text>
           </View>
-        ) : sections.length > 0 ? (
-          (() => {
-            const nonFooter = sections.filter((s) => s.type !== SECTION_TYPES.FOOTER);
-            const footers = sections.filter((s) => s.type === SECTION_TYPES.FOOTER);
-            return [...nonFooter, ...footers].map(renderSection);
-          })()
+        ) : orderedSections.length > 0 ? (
+          orderedSections.map(renderSection)
         ) : (
           <View style={styles.loaderContainer}>
             <Text style={[styles.loaderText, { color: theme.textSecondary }]}>
@@ -294,40 +331,11 @@ export default function HomeScreen({ navigation }) {
                   keyExtractor={(item) => item.id}
                   keyboardShouldPersistTaps="handled"
                   style={[styles.searchResultsBox, { backgroundColor: theme.background }]}
-                  renderItem={({ item }) => {
-                    const inCart = isInCart(item.id);
-                    return (
-                      <View style={[styles.searchItem, { borderBottomColor: theme.border }]}>
-                        {item.image ? (
-                          <Image source={{ uri: item.image }} style={styles.searchItemImage} />
-                        ) : (
-                          <View style={[styles.searchItemImage, { backgroundColor: theme.inputBg }]} />
-                        )}
-                        <View style={styles.searchItemInfo}>
-                          <Text style={[styles.searchItemName, { color: theme.text }]} numberOfLines={1}>
-                            {item.name}
-                          </Text>
-                          {item.category ? (
-                            <Text style={[styles.searchItemCategory, { color: theme.textSecondary }]} numberOfLines={1}>
-                              {item.category}
-                            </Text>
-                          ) : null}
-                          <Text style={[styles.searchItemPrice, { color: theme.primary }]}>
-                            ₹{item.price}
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          style={[
-                            styles.searchCartBtn,
-                            { backgroundColor: inCart ? theme.badge : theme.primary },
-                          ]}
-                          onPress={() => inCart ? removeFromCart(item.id) : addToCart(item)}
-                        >
-                          <Feather name={inCart ? 'check' : 'plus'} size={16} color="#FFF" />
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  }}
+                  removeClippedSubviews={Platform.OS !== 'web'}
+                  maxToRenderPerBatch={10}
+                  windowSize={5}
+                  initialNumToRender={6}
+                  renderItem={renderSearchItem}
                 />
               )
             )}

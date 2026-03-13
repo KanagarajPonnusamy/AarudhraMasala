@@ -2,17 +2,18 @@
  * Created by: Kanagaraj P
  * Created on: 04-03-2026
  */
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  Image,
   TouchableOpacity,
-  SafeAreaView,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import CachedImage from '../components/CachedImage';
 import { useTheme } from '../context/ThemeContext';
 import { useFavourites } from '../context/FavouriteContext';
 import { useCart } from '../context/CartContext';
@@ -33,7 +34,7 @@ function FavouriteItem({ item, theme, removeFromFavourites, addToCart, isInCart 
       ]}
     >
       <View style={styles.imageContainer}>
-        <Image source={{ uri: item.image }} style={styles.itemImage} />
+        <CachedImage source={{ uri: item.image }} style={styles.itemImage} />
       </View>
 
       <View style={styles.itemInfo}>
@@ -100,20 +101,22 @@ function FavouriteItem({ item, theme, removeFromFavourites, addToCart, isInCart 
   );
 }
 
+const MemoizedFavouriteItem = React.memo(FavouriteItem);
+
 export default function FavouritesScreen({ navigation }) {
   const { theme } = useTheme();
   const { favourites, favouriteCount, removeFromFavourites } = useFavourites();
   const { addToCart, isInCart } = useCart();
 
-  const renderItem = ({ item }) => (
-    <FavouriteItem
+  const renderItem = useCallback(({ item }) => (
+    <MemoizedFavouriteItem
       item={item}
       theme={theme}
       removeFromFavourites={removeFromFavourites}
       addToCart={addToCart}
       isInCart={isInCart}
     />
-  );
+  ), [theme, removeFromFavourites, addToCart, isInCart]);
 
   const renderEmpty = () => (
     <EmptyState
@@ -157,6 +160,10 @@ export default function FavouritesScreen({ navigation }) {
         }
         ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={Platform.OS !== 'web'}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={6}
       />
     </SafeAreaView>
   );

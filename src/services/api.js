@@ -7,8 +7,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ---------- Constants ----------
 
-const BASE_URL = 'https://www.aarudhramasala.com';
-const APP_ID = 'APP-REG-2XXXX';
+import { Platform } from 'react-native';
+
+const PRODUCTION_URL = 'https://www.aarudhramasala.com';
+const BASE_URL = Platform.OS === 'web' && __DEV__
+  ? 'http://localhost:3001'
+  : PRODUCTION_URL;
+const APP_ID = 'APP-REG-WEB';
 
 // API Endpoints
 const ENDPOINTS = {
@@ -82,7 +87,9 @@ api.interceptors.response.use(
       console.log(`[API] ${status} received, refreshing admin token...`);
       await AsyncStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
       try {
-        const newToken = await fetchAdminToken();
+        const storedUser = await getStoredUser();
+        const userId = storedUser?.user_id || storedUser?.id;
+        const newToken = await fetchAdminToken(userId);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (tokenError) {
@@ -97,9 +104,13 @@ api.interceptors.response.use(
 
 // ---------- Admin Token ----------
 
-async function fetchAdminToken() {
-  console.log('[API] Fetching admin token...');
-  const response = await api.post(ENDPOINTS.ADMIN_LOGIN, ADMIN_CREDENTIALS);
+async function fetchAdminToken(userId) {
+  console.log('[API] Fetching admin token...', userId ? `with userId: ${userId}` : '(no user)');
+  const payload = { ...ADMIN_CREDENTIALS };
+  if (userId) {
+    payload.user_id = String(userId);
+  }
+  const response = await api.post(ENDPOINTS.ADMIN_LOGIN, payload);
   console.log('[API] Admin login response:', JSON.stringify(response.data));
 
   const token = response.data?.token || response.data;
@@ -111,20 +122,29 @@ async function fetchAdminToken() {
 }
 
 // Use cached admin token if available; only fetch when missing
-export async function getAdminToken() {
+export async function getAdminToken(userId) {
   const cached = await AsyncStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
   if (cached) {
     console.log('[API] Using cached admin token');
     return cached;
   }
   console.log('[API] No cached token, fetching fresh admin token...');
-  return fetchAdminToken();
+  return fetchAdminToken(userId);
+}
+
+// Force re-fetch admin token with user-id (call after login)
+export async function refreshAdminTokenForUser(userId) {
+  console.log('[API] Refreshing admin token for logged-in user:', userId);
+  await AsyncStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
+  return fetchAdminToken(userId);
 }
 
 async function ensureAdminToken() {
   let token = await AsyncStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
   if (!token) {
-    token = await fetchAdminToken();
+    const storedUser = await getStoredUser();
+    const userId = storedUser?.user_id || storedUser?.id;
+    token = await fetchAdminToken(userId);
   }
   return token;
 }

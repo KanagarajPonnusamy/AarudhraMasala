@@ -2,11 +2,14 @@
  * Created by: Kanagaraj P
  * Created on: 01-03-2026
  */
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import CachedImage from './CachedImage';
 import { SIZES } from '../constants/theme';
 import { CATEGORIES } from '../constants/data';
+
+const CategorySeparator = () => <View style={{ width: 16 }} />;
 
 export default function CategoryList({ categories, title }) {
   const { theme } = useTheme();
@@ -22,16 +25,16 @@ export default function CategoryList({ categories, title }) {
 
   const sectionTitle = title || 'Shop by Category';
 
-  const renderCategory = ({ item }) => (
+  const renderCategory = useCallback(({ item }) => (
     <TouchableOpacity style={styles.categoryItem}>
       <View style={[styles.categoryIcon, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-        <Image source={{ uri: item.icon }} style={styles.categoryImage} />
+        <CachedImage source={{ uri: item.icon }} style={styles.categoryImage} contentFit="cover" />
       </View>
       <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={2}>
         {item.name}
       </Text>
     </TouchableOpacity>
-  );
+  ), [theme]);
 
   return (
     <View style={styles.container}>
@@ -45,7 +48,11 @@ export default function CategoryList({ categories, title }) {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: SIZES.padding, flexGrow: 1, justifyContent: 'center' }}
-        ItemSeparatorComponent={() => <View style={{ width: 16 }} />}
+        ItemSeparatorComponent={CategorySeparator}
+        removeClippedSubviews={Platform.OS !== 'web'}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={6}
       />
     </View>
   );
