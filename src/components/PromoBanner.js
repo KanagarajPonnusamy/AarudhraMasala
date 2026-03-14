@@ -54,13 +54,7 @@ const PromoSeparator = () => <View style={{ width: CARD_SPACING }} />;
 
 function PromoCarousel({ promos, theme }) {
   const { width: screenWidth } = useWindowDimensions();
-  const contentWidth = Platform.OS === 'web' && screenWidth > SIZES.maxWidth
-    ? SIZES.maxWidth
-    : screenWidth;
-  const cardWidth = useMemo(() => {
-    if (contentWidth >= 768) return contentWidth - SIZES.padding * 2;
-    return Math.min(Math.round(contentWidth * 0.85), 500);
-  }, [contentWidth]);
+  const cardWidth = useMemo(() => Math.min(Math.round(screenWidth * 0.85), 500), [screenWidth]);
   const cardHeight = useMemo(() => Math.round(cardWidth * 0.6), [cardWidth]);
   const snapInterval = useMemo(() => cardWidth + CARD_SPACING, [cardWidth]);
 

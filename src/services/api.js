@@ -26,6 +26,7 @@ const ENDPOINTS = {
   FETCH_ORDERS: `/api/am/orders/v1/fetchOrders`, // GET /{userid}/{APP_ID}
   FETCH_PRODUCTS_BY_CODE: `/api/am/products/v1/fetchProductsByCode/${APP_ID}`, // GET /{code}
   FETCH_PRODUCT: `/api/am/products/v1/fetchProduct`, // GET /{id}/{APP_ID}
+  SEND_ORDER_ALERT: `/api/am/email/v1/sendOrdersAlert`, // GET /{userid}/{APP_ID}/{orderid}
 };
 
 // Storage Keys
@@ -239,6 +240,12 @@ export async function placeOrderAPI(userid, orderData) {
   );
   console.log('[API] Place order response:', JSON.stringify(response.data));
   return response.data;
+}
+
+export function sendOrderAlert(userid, orderid) {
+  ensureAdminToken().then(() => {
+    api.get(`${ENDPOINTS.SEND_ORDER_ALERT}/${userid}/${APP_ID}/${orderid}`).catch(() => {});
+  }).catch(() => {});
 }
 
 export async function fetchOrdersAPI(userid) {

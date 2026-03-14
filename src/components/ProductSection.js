@@ -19,7 +19,7 @@ function ProductSection({ title, products, typecode }) {
   const containerWidth = Platform.OS === 'web' && screenWidth > SIZES.maxWidth
     ? SIZES.maxWidth
     : screenWidth;
-  const columns = containerWidth >= 1024 ? 5 : containerWidth >= 768 ? 4 : 2;
+  const columns = containerWidth >= 768 ? 4 : 2;
   const availableWidth = containerWidth - SIZES.padding * 2;
   const cardWidth = (availableWidth - GAP * (columns - 1)) / columns;
 
@@ -36,7 +36,7 @@ function ProductSection({ title, products, typecode }) {
         ) : null}
       </View>
       <View style={styles.grid}>
-        {products.map((item) => (
+        {products.slice(0, columns >= 4 ? 8 : 6).map((item) => (
           <View key={item.id} style={{ width: cardWidth }}>
             <ProductCard
               product={item}
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     paddingHorizontal: SIZES.padding,
     gap: GAP,
   },

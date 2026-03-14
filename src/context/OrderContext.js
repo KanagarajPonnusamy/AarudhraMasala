@@ -4,7 +4,7 @@
  */
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { placeOrderAPI, fetchOrdersAPI } from '../services/api';
+import { placeOrderAPI, fetchOrdersAPI, sendOrderAlert } from '../services/api';
 import { useAuth } from './AuthContext';
 
 const ORDERS_KEY = '@orders';
@@ -98,8 +98,13 @@ export function OrderProvider({ children }) {
         }))
       : localDetails;
 
+    const orderId = apiResponse?.orderid || `ORD-${Date.now()}`;
+
+    // Fire-and-forget: send order alert email
+    sendOrderAlert(userid, orderId);
+
     const newOrder = {
-      id: apiResponse?.orderid || `ORD-${Date.now()}`,
+      id: orderId,
       ...orderData,
       ...apiResponse,
       orderdetails: mergedDetails,
