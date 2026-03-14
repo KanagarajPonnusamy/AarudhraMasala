@@ -51,7 +51,12 @@ export default function AppNavigator() {
 
   return (
     <WebContainer style={{ backgroundColor: theme.background }}>
-      <NavigationContainer>
+      <NavigationContainer
+        documentTitle={{
+          formatter: () =>
+            'Aarudhra Masala | Masala powder | Indian masala | Homemade masala powder | Authentic Indian spices | Traditional masala blends | Organic masala powder | Pure spice powder',
+        }}
+      >
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Main" component={DrawerNavigator} />
           <Stack.Screen

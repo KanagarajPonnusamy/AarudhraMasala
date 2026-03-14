@@ -7,12 +7,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ---------- Constants ----------
 
-import { Platform } from 'react-native';
 
 const PRODUCTION_URL = 'https://www.aarudhramasala.com';
-const BASE_URL = Platform.OS === 'web' && __DEV__
-  ? 'http://localhost:3001'
-  : PRODUCTION_URL;
+const BASE_URL = PRODUCTION_URL;
 const APP_ID = 'APP-REG-WEB';
 
 // API Endpoints

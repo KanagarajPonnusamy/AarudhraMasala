@@ -9,13 +9,13 @@ const CartContext = createContext();
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
 
-  const addToCart = useCallback((product) => {
+  const addToCart = useCallback((product, qty = 1) => {
     setCartItems((prev) => {
       const exists = prev.find((item) => item.id === product.id);
       if (exists) {
         return prev;
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { ...product, quantity: qty }];
     });
   }, []);
 
@@ -74,6 +74,7 @@ export function CartProvider({ children }) {
       orderdetails: cartItems.map((item) => ({
         userid: 0,
         quantity: item.quantity,
+        quantity_val: item.quantity_val || '',
         productprice: String(item.price),
         productcode: item.productcode || '',
         productname: item.name || '',

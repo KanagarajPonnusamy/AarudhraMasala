@@ -254,7 +254,6 @@ const styles = StyleSheet.create({
   },
   bannerImage: {
     width: '100%',
-    resizeMode: 'cover',
   },
   dots: {
     flexDirection: 'row',

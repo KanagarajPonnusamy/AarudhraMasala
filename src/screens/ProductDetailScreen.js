@@ -33,6 +33,8 @@ export default function ProductDetailScreen({ navigation, route }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedWeight, setSelectedWeight] = useState(null);
   const { width: screenWidth } = useWindowDimensions();
   const isWide = Platform.OS === 'web' && screenWidth >= WIDE_BREAKPOINT;
 
@@ -41,7 +43,11 @@ export default function ProductDetailScreen({ navigation, route }) {
     (async () => {
       try {
         const data = await fetchProduct(productId);
-        if (mounted) setProduct(data);
+        if (mounted) {
+          setProduct(data);
+          const weights = data.quantity ? data.quantity.split('|').map((w) => w.trim()).filter(Boolean) : [];
+          if (weights.length > 0) setSelectedWeight(weights[0]);
+        }
       } catch (e) {
         console.warn('Fetch product failed:', e.message);
         if (mounted) setError('Failed to load product details');
@@ -80,6 +86,8 @@ export default function ProductDetailScreen({ navigation, route }) {
     );
   }
 
+  const weightOptions = product.quantity ? product.quantity.split('|').map((w) => w.trim()).filter(Boolean) : [];
+
   const cartItem = {
     id: String(product.id),
     name: product.productname,
@@ -88,7 +96,8 @@ export default function ProductDetailScreen({ navigation, route }) {
     image: product.producturl,
     category: product.productcategory,
     productcode: product.productcode,
-    weight: '',
+    weight: selectedWeight || '',
+    quantity_val: selectedWeight || '',
   };
 
   const inCart = isInCart(String(product.id));
@@ -135,10 +144,10 @@ export default function ProductDetailScreen({ navigation, route }) {
         </View>
       )}
 
-      {/* Description snippet on web (above price like reference) */}
-      {isWide && product.description ? (
-        <Text style={[styles.webDescriptionSnippet, { color: theme.textSecondary }]} numberOfLines={3}>
-          {product.description}
+      {/* Short description on web */}
+      {isWide && product.shortdescription ? (
+        <Text style={[styles.webDescriptionSnippet, { color: theme.textSecondary }]} numberOfLines={2}>
+          {product.shortdescription}
         </Text>
       ) : null}
 
@@ -161,26 +170,94 @@ export default function ProductDetailScreen({ navigation, route }) {
         )}
       </View>
 
-      {/* Add to Cart */}
-      <TouchableOpacity
-        style={[
-          styles.cartButton,
-          isWide && styles.cartButtonWide,
-          inCart
-            ? { borderColor: theme.accent, backgroundColor: theme.accent }
-            : { borderColor: theme.primary, backgroundColor: theme.primary },
-        ]}
-        onPress={() => inCart ? removeFromCart(String(product.id)) : addToCart(cartItem)}
-      >
-        <Feather
-          name={inCart ? 'x-circle' : 'shopping-cart'}
-          size={14}
-          color="#FFF"
-        />
-        <Text style={[styles.cartButtonText, { color: '#FFF' }]}>
-          {inCart ? 'Remove' : 'Add to Cart'}
-        </Text>
-      </TouchableOpacity>
+      {/* Weight Options */}
+      {weightOptions.length > 0 && (
+        <View style={styles.weightSection}>
+          <Text style={[styles.weightLabel, { color: theme.text }]}>
+            Weight : {selectedWeight}
+          </Text>
+          <View style={styles.weightRow}>
+            {weightOptions.map((w) => {
+              const isSelected = w === selectedWeight;
+              return (
+                <TouchableOpacity
+                  key={w}
+                  style={[
+                    styles.weightChip,
+                    {
+                      borderColor: isSelected ? theme.primary : theme.border,
+                      backgroundColor: isSelected ? theme.primary + '10' : 'transparent',
+                    },
+                  ]}
+                  onPress={() => setSelectedWeight(w)}
+                >
+                  <Text
+                    style={[
+                      styles.weightChipText,
+                      { color: isSelected ? theme.primary : theme.textSecondary },
+                    ]}
+                  >
+                    {w}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      )}
+
+      {/* Quantity Selector */}
+      {!inCart && (
+        <View style={[styles.qtyContainer, { borderColor: theme.border }]}>
+          <TouchableOpacity
+            style={[styles.qtyBtn, { backgroundColor: theme.border + '40' }]}
+            onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+          >
+            <Feather name="minus" size={20} color={theme.text} />
+          </TouchableOpacity>
+          <Text style={[styles.qtyText, { color: theme.text }]}>{quantity}</Text>
+          <TouchableOpacity
+            style={[styles.qtyBtn, { backgroundColor: theme.border + '40' }]}
+            onPress={() => setQuantity((q) => q + 1)}
+          >
+            <Feather name="plus" size={20} color={theme.text} />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Cart Actions */}
+      {inCart ? (
+        <View style={styles.cartActionRow}>
+          <TouchableOpacity
+            style={[styles.cartButton, { borderColor: theme.accent, backgroundColor: theme.accent }]}
+            onPress={() => removeFromCart(String(product.id))}
+          >
+            <Feather name="x-circle" size={16} color="#FFF" />
+            <Text style={[styles.cartButtonText, { color: '#FFF' }]}>
+              Remove from Cart
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.goToCartBtn, { backgroundColor: theme.primary }]}
+            onPress={() => navigation.navigate('Cart')}
+          >
+            <Feather name="shopping-cart" size={20} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={[styles.cartButton, { borderColor: theme.primary, backgroundColor: theme.primary }]}
+          onPress={() => {
+            addToCart(cartItem, quantity);
+            setQuantity(1);
+          }}
+        >
+          <Feather name="shopping-cart" size={16} color="#FFF" />
+          <Text style={[styles.cartButtonText, { color: '#FFF' }]}>
+            Add To Cart
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* Divider */}
       <View style={[styles.divider, { backgroundColor: theme.border }]} />
@@ -206,7 +283,7 @@ export default function ProductDetailScreen({ navigation, route }) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar style={theme.isDark ? 'light' : 'dark'} />
-      <Header theme={theme} navigation={navigation} title={product.productname} />
+      <Header theme={theme} navigation={navigation} title={isWide ? '' : product.productname} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, isWide && styles.scrollContentWide]}>
         {isWide ? (
@@ -310,7 +387,6 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     height: 280,
-    resizeMode: 'contain',
   },
   productImageWide: {
     height: 450,
@@ -347,7 +423,7 @@ const styles = StyleSheet.create({
   // Info section
   infoSection: {
     padding: SIZES.padding,
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   infoSectionWide: {
     flex: 1,
@@ -433,25 +509,80 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
   },
+  weightSection: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  weightLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  weightRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  weightChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1.5,
+  },
+  weightChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  qtyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  qtyBtn: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyText: {
+    fontSize: 18,
+    fontWeight: '700',
+    minWidth: 40,
+    textAlign: 'center',
+  },
+  cartActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+  },
   cartButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 32,
+    paddingHorizontal: 24,
+    gap: 8,
+    paddingVertical: 14,
     borderRadius: 8,
     borderWidth: 1.5,
     marginTop: 8,
   },
-  cartButtonWide: {
-    alignSelf: 'flex-start',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-  },
   cartButtonText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
+    flexShrink: 0,
+  },
+  goToCartBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
   },
 });

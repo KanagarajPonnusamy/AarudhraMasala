@@ -54,7 +54,13 @@ const PromoSeparator = () => <View style={{ width: CARD_SPACING }} />;
 
 function PromoCarousel({ promos, theme }) {
   const { width: screenWidth } = useWindowDimensions();
-  const cardWidth = useMemo(() => Math.min(Math.round(screenWidth * 0.85), 500), [screenWidth]);
+  const contentWidth = Platform.OS === 'web' && screenWidth > SIZES.maxWidth
+    ? SIZES.maxWidth
+    : screenWidth;
+  const cardWidth = useMemo(() => {
+    if (contentWidth >= 768) return contentWidth - SIZES.padding * 2;
+    return Math.min(Math.round(contentWidth * 0.85), 500);
+  }, [contentWidth]);
   const cardHeight = useMemo(() => Math.round(cardWidth * 0.6), [cardWidth]);
   const snapInterval = useMemo(() => cardWidth + CARD_SPACING, [cardWidth]);
 
@@ -162,11 +168,12 @@ function PromoCarousel({ promos, theme }) {
   );
 
   const getPromoImage = (item) =>
-    item.promourl || item.imageurl || item.image || item.promoimage || null;
+    item.promourl || item.imageurl || item.image || item.promoimage || item.producturl || item.pageval || null;
 
   const renderPromo = ({ item, index }) => {
     const bgColor = PROMO_COLORS[index % PROMO_COLORS.length];
     const imageUri = getPromoImage(item);
+    if (__DEV__) console.log(`[PromoBanner] item[${index}] keys:`, Object.keys(item), 'imageUri:', imageUri);
 
     return (
       <View style={[styles.promoCard, { width: cardWidth, height: cardHeight, backgroundColor: bgColor }]}>
@@ -181,11 +188,6 @@ function PromoCarousel({ promos, theme }) {
         )}
         <View style={styles.promoOverlay}>
           <Text style={styles.promoName} numberOfLines={2}>{item.promoname}</Text>
-          {item.promocode ? (
-            <View style={styles.promoCodeBadge}>
-              <Text style={styles.promoCodeText}>{item.promocode}</Text>
-            </View>
-          ) : null}
         </View>
       </View>
     );
@@ -326,9 +328,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
   },
   promoIconArea: {
     flex: 1,
@@ -350,25 +349,14 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: 'rgba(0,0,0,0.45)',
     paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingVertical: 30,
+    alignItems: 'center',
   },
   promoName: {
-    fontSize: 11,
+    fontSize: 16,
     fontWeight: '700',
     color: '#FFF',
-  },
-  promoCodeBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  promoCodeText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#FFF',
+    textAlign: 'center',
   },
   dots: {
     flexDirection: 'row',

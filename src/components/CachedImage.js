@@ -10,7 +10,7 @@ export default function CachedImage({ source, style, contentFit, ...rest }) {
       source={{ uri }}
       style={style}
       contentFit={contentFit || 'contain'}
-      cachePolicy="disk"
+      cachePolicy="memory-disk"
       transition={200}
       placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
       placeholderContentFit="cover"

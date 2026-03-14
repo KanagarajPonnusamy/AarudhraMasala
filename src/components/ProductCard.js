@@ -122,7 +122,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 140,
-    resizeMode: 'contain',
   },
   badge: {
     position: 'absolute',

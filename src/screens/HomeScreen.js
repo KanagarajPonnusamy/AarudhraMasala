@@ -15,6 +15,7 @@ import {
   Keyboard,
   RefreshControl,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import CachedImage from '../components/CachedImage';
@@ -37,6 +38,8 @@ export default function HomeScreen({ navigation }) {
   const { adminTokenReady } = useAuth();
   const { addToCart, removeFromCart, isInCart } = useCart();
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -261,22 +264,24 @@ export default function HomeScreen({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} colors={[theme.primary]} />
         }
       >
-        {loading ? (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color={theme.primary} />
-            <Text style={[styles.loaderText, { color: theme.textSecondary }]}>
-              Loading...
-            </Text>
-          </View>
-        ) : orderedSections.length > 0 ? (
-          orderedSections.map(renderSection)
-        ) : (
-          <View style={styles.loaderContainer}>
-            <Text style={[styles.loaderText, { color: theme.textSecondary }]}>
-              No content available
-            </Text>
-          </View>
-        )}
+        <View style={isWeb ? [styles.webContentWrapper, { maxWidth: SIZES.maxWidth }] : undefined}>
+          {loading ? (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color={theme.primary} />
+              <Text style={[styles.loaderText, { color: theme.textSecondary }]}>
+                Loading...
+              </Text>
+            </View>
+          ) : orderedSections.length > 0 ? (
+            orderedSections.map(renderSection)
+          ) : (
+            <View style={styles.loaderContainer}>
+              <Text style={[styles.loaderText, { color: theme.textSecondary }]}>
+                No content available
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
 
       {/* Search Overlay — sits below the header */}
@@ -352,6 +357,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 30,
+  },
+  webContentWrapper: {
+    width: '100%',
+    alignSelf: 'center',
   },
   loaderContainer: {
     paddingVertical: 60,

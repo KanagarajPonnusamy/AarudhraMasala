@@ -19,7 +19,7 @@ function ProductSection({ title, products, typecode }) {
   const containerWidth = Platform.OS === 'web' && screenWidth > SIZES.maxWidth
     ? SIZES.maxWidth
     : screenWidth;
-  const columns = containerWidth >= 768 ? 4 : 2;
+  const columns = containerWidth >= 1024 ? 5 : containerWidth >= 768 ? 4 : 2;
   const availableWidth = containerWidth - SIZES.padding * 2;
   const cardWidth = (availableWidth - GAP * (columns - 1)) / columns;
 
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: SIZES.padding,
     gap: GAP,
   },
