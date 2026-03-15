@@ -4,6 +4,7 @@
  */
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 import CachedImage from './CachedImage';
 import { SIZES } from '../constants/theme';
@@ -14,6 +15,7 @@ const CategorySeparator = () => <View style={{ width: 16 }} />;
 
 export default function CategoryList({ categories, title }) {
   const { theme } = useTheme();
+  const navigation = useNavigation();
 
   // Map API data to internal format, falling back to CATEGORIES placeholder images
   const displayCategories = categories
@@ -26,14 +28,21 @@ export default function CategoryList({ categories, title }) {
 
   const sectionTitle = title || 'Shop by Category';
 
+  const handleCategoryPress = useCallback((item) => {
+    navigation.navigate('ProductList', {
+      title: item.name,
+      categoryName: item.name,
+    });
+  }, [navigation]);
+
   const renderCategory = useCallback(({ item }) => (
-    <TouchableOpacity style={styles.categoryItem}>
+    <TouchableOpacity style={styles.categoryItem} onPress={() => handleCategoryPress(item)}>
       <View style={[styles.categoryIcon, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
         <CachedImage source={{ uri: item.icon }} style={styles.categoryImage} contentFit="cover" />
       </View>
       <HtmlText text={item.name} style={[styles.categoryName, { color: theme.text }]} color={theme.text} numberOfLines={2} />
     </TouchableOpacity>
-  ), [theme]);
+  ), [theme, handleCategoryPress]);
 
   return (
     <View style={styles.container}>

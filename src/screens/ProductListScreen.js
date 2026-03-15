@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
-import { fetchProductsByCode } from '../services/api';
+import { fetchProductsByCode, fetchByProductCategory } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import Header from '../components/Header';
 import Breadcrumb from '../components/Breadcrumb';
@@ -23,7 +23,7 @@ import { SIZES } from '../constants/theme';
 const GAP = 20;
 
 export default function ProductListScreen({ navigation, route }) {
-  const { title, typecode } = route.params || {};
+  const { title, typecode, categoryName } = route.params || {};
   const { theme } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const [products, setProducts] = useState([]);
@@ -38,11 +38,13 @@ export default function ProductListScreen({ navigation, route }) {
   const cardWidth = (availableWidth - GAP * (columns - 1)) / columns;
 
   useEffect(() => {
-    if (!typecode) return;
+    if (!typecode && !categoryName) return;
     let mounted = true;
     (async () => {
       try {
-        const data = await fetchProductsByCode(typecode);
+        const data = categoryName
+          ? await fetchByProductCategory(categoryName)
+          : await fetchProductsByCode(typecode);
         if (mounted && Array.isArray(data)) {
           setProducts(
             data.map((p, i) => ({
@@ -69,7 +71,7 @@ export default function ProductListScreen({ navigation, route }) {
       }
     })();
     return () => { mounted = false; };
-  }, [typecode]);
+  }, [typecode, categoryName]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>

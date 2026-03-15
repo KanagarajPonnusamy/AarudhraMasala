@@ -27,6 +27,7 @@ import { fetchHomeProducts } from '../services/api';
 import { SECTION_TYPES } from '../constants/data';
 import { SIZES } from '../constants/theme';
 import { useCart } from '../context/CartContext';
+import { homeCache } from '../services/api';
 import Header from '../components/Header';
 import CategoryList from '../components/CategoryList';
 import ProductSection from '../components/ProductSection';
@@ -97,11 +98,19 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     if (!adminTokenReady) return;
 
+    // Use cached data if available (avoid re-fetch on navigation back)
+    if (homeCache.data) {
+      setSections(homeCache.data);
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
     (async () => {
       try {
         const data = await fetchHomeProducts();
         if (mounted && Array.isArray(data) && data.length > 0) {
+          homeCache.data = data;
           setSections(data);
         }
       } catch (e) {
@@ -118,6 +127,7 @@ export default function HomeScreen({ navigation }) {
     try {
       const data = await fetchHomeProducts();
       if (Array.isArray(data) && data.length > 0) {
+        homeCache.data = data;
         setSections(data);
       }
     } catch (e) {

@@ -25,6 +25,7 @@ const ENDPOINTS = {
   PLACE_ORDER: `/api/am/orders/v1/orderProducts`, // POST /{userid}/{APP_ID}
   FETCH_ORDERS: `/api/am/orders/v1/fetchOrders`, // GET /{userid}/{APP_ID}
   FETCH_PRODUCTS_BY_CODE: `/api/am/products/v1/fetchProductsByCode/${APP_ID}`, // GET /{code}
+  FETCH_BY_CATEGORY: `/api/am/products/v1/fetchByProductCategory/${APP_ID}`, // GET /{categoryname}
   FETCH_PRODUCT: `/api/am/products/v1/fetchProduct`, // GET /{id}/{APP_ID}
   SEND_ORDER_ALERT: `/api/am/email/v1/sendOrdersAlert`, // GET /{userid}/{APP_ID}/{orderid}
 };
@@ -50,12 +51,15 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach Bearer token to every request
+// Attach Bearer token to every request & log outgoing URL
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const method = (config.method || 'get').toUpperCase();
+  const url = `${config.baseURL || ''}${config.url || ''}`;
+  console.log(`[API] >> ${method} ${url}`);
   return config;
 });
 
@@ -70,9 +74,14 @@ export function resetAdminTokenChanged() {
   _adminTokenChanged = false;
 }
 
-// On 403 or 500, refresh admin token and retry once
+// Log every response & handle token refresh on 403/500
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = (response.config.method || 'get').toUpperCase();
+    const url = `${response.config.baseURL || ''}${response.config.url || ''}`;
+    console.log(`[API] << ${method} ${url} [${response.status}]`, JSON.stringify(response.data));
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
     const status = error.response?.status;
@@ -109,7 +118,6 @@ async function fetchAdminToken(userId) {
     payload.user_id = String(userId);
   }
   const response = await api.post(ENDPOINTS.ADMIN_LOGIN, payload);
-  console.log('[API] Admin login response:', JSON.stringify(response.data));
 
   const token = response.data?.token || response.data;
   if (token) {
@@ -151,11 +159,9 @@ async function ensureAdminToken() {
 
 export async function loginUser(email, password) {
   await ensureAdminToken();
-  console.log('[API] User login with:', email);
   const response = await api.get(
     `${ENDPOINTS.VALIDATE_USER}/${encodeURIComponent(email)}/${encodeURIComponent(password)}/${APP_ID}`
   );
-  console.log('[API] Login response:', JSON.stringify(response.data));
   const userToken = response.data?.token;
   if (userToken) {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_TOKEN, String(userToken));
@@ -167,17 +173,14 @@ export async function loginUser(email, password) {
 export async function logoutUser(email) {
   await ensureAdminToken();
   const userToken = await AsyncStorage.getItem(STORAGE_KEYS.USER_TOKEN);
-  console.log('[API] Logging out:', email);
   const response = await api.get(
     `${ENDPOINTS.LOGOUT_USER}/${encodeURIComponent(email)}/${encodeURIComponent(userToken || '')}`
   );
-  console.log('[API] Logout response:', JSON.stringify(response.data));
   return response.data;
 }
 
 export async function registerUser(data) {
   await ensureAdminToken();
-  console.log('[API] Register payload:', JSON.stringify(data));
   const response = await api.post(ENDPOINTS.REGISTER_USER, {
     firstname: data.firstName,
     lastname: data.lastName,
@@ -187,7 +190,6 @@ export async function registerUser(data) {
     confirm_pwd: data.confirmPassword,
     usertype: 'end-user',
   });
-  console.log('[API] Register response:', JSON.stringify(response.data));
   return response.data;
 }
 
@@ -196,6 +198,10 @@ export async function fetchUserDetails(userId) {
   const response = await api.get(`${ENDPOINTS.FETCH_USER}/${userId}`);
   return response.data;
 }
+
+// ---------- Cache ----------
+
+export const homeCache = { data: null };
 
 // ---------- Products ----------
 
@@ -223,6 +229,12 @@ export async function fetchProductsByCode(code) {
   return response.data;
 }
 
+export async function fetchByProductCategory(categoryName) {
+  await ensureAdminToken();
+  const response = await api.get(`${ENDPOINTS.FETCH_BY_CATEGORY}/${encodeURIComponent(categoryName)}`);
+  return response.data;
+}
+
 export async function fetchProduct(id) {
   await ensureAdminToken();
   const response = await api.get(`${ENDPOINTS.FETCH_PRODUCT}/${id}/${APP_ID}`);
@@ -233,28 +245,25 @@ export async function fetchProduct(id) {
 
 export async function placeOrderAPI(userid, orderData) {
   await ensureAdminToken();
-  console.log('[API] Placing order for userid:', userid);
   const response = await api.post(
     `${ENDPOINTS.PLACE_ORDER}/${userid}/${APP_ID}`,
     orderData
   );
-  console.log('[API] Place order response:', JSON.stringify(response.data));
   return response.data;
 }
 
 export function sendOrderAlert(userid, orderid) {
+  const url = `${ENDPOINTS.SEND_ORDER_ALERT}/${userid}/${APP_ID}/${orderid}`;
   ensureAdminToken().then(() => {
-    api.get(`${ENDPOINTS.SEND_ORDER_ALERT}/${userid}/${APP_ID}/${orderid}`).catch(() => {});
+    api.get(url).catch(() => {});
   }).catch(() => {});
 }
 
 export async function fetchOrdersAPI(userid) {
   await ensureAdminToken();
-  console.log('[API] Fetching orders for userid:', userid);
   const response = await api.get(
     `${ENDPOINTS.FETCH_ORDERS}/${userid}/${APP_ID}`
   );
-  console.log('[API] Fetch orders response:', JSON.stringify(response.data));
   return response.data;
 }
 

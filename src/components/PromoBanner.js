@@ -168,7 +168,6 @@ function PromoCarousel({ promos, theme }) {
   const renderPromo = ({ item, index }) => {
     const bgColor = PROMO_COLORS[index % PROMO_COLORS.length];
     const imageUri = getPromoImage(item);
-    if (__DEV__) console.log(`[PromoBanner] item[${index}] keys:`, Object.keys(item), 'imageUri:', imageUri);
 
     return (
       <View style={[styles.promoCard, { width: cardWidth, height: cardHeight, backgroundColor: bgColor }]}>

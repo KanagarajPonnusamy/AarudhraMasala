@@ -98,15 +98,18 @@ export function OrderProvider({ children }) {
         }))
       : localDetails;
 
-    const orderId = apiResponse?.orderid || `ORD-${Date.now()}`;
+    console.log('[Order] Place order API response:', JSON.stringify(apiResponse));
+    const orderId = apiResponse?.order?.orderid || apiResponse?.orderid || `ORD-${Date.now()}`;
+    console.log('[Order] Extracted orderId:', orderId);
 
     // Fire-and-forget: send order alert email
     sendOrderAlert(userid, orderId);
 
     const newOrder = {
-      id: orderId,
       ...orderData,
       ...apiResponse,
+      id: orderId,
+      orderid: orderId,
       orderdetails: mergedDetails,
       status: 'Confirmed',
       placed_at: new Date().toISOString(),
