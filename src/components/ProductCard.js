@@ -10,6 +10,7 @@ import CachedImage from './CachedImage';
 import { useCart } from '../context/CartContext';
 import { useFavourites } from '../context/FavouriteContext';
 import { SIZES } from '../constants/theme';
+import HtmlText from './HtmlText';
 
 function ProductCard({ product, style, onPress }) {
   const { theme } = useTheme();
@@ -54,10 +55,8 @@ function ProductCard({ product, style, onPress }) {
       </View>
 
       <View style={styles.info}>
-        <Text style={[styles.category, { color: theme.textSecondary }]}>{product.category}</Text>
-        <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
-          {product.name}
-        </Text>
+        <HtmlText text={product.category} style={[styles.category, { color: theme.textSecondary }]} color={theme.textSecondary} />
+        <HtmlText text={product.name} style={[styles.name, { color: theme.text }]} color={theme.text} numberOfLines={1} />
         <Text style={[styles.weight, { color: theme.textSecondary }]}>{product.weight}</Text>
 
         <View style={styles.ratingRow}>

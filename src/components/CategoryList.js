@@ -8,6 +8,7 @@ import { useTheme } from '../context/ThemeContext';
 import CachedImage from './CachedImage';
 import { SIZES } from '../constants/theme';
 import { CATEGORIES } from '../constants/data';
+import HtmlText from './HtmlText';
 
 const CategorySeparator = () => <View style={{ width: 16 }} />;
 
@@ -30,16 +31,14 @@ export default function CategoryList({ categories, title }) {
       <View style={[styles.categoryIcon, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
         <CachedImage source={{ uri: item.icon }} style={styles.categoryImage} contentFit="cover" />
       </View>
-      <Text style={[styles.categoryName, { color: theme.text }]} numberOfLines={2}>
-        {item.name}
-      </Text>
+      <HtmlText text={item.name} style={[styles.categoryName, { color: theme.text }]} color={theme.text} numberOfLines={2} />
     </TouchableOpacity>
   ), [theme]);
 
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>{sectionTitle}</Text>
+        <HtmlText text={sectionTitle} style={[styles.sectionTitle, { color: theme.text }]} color={theme.text} />
       </View>
       <FlatList
         data={displayCategories}

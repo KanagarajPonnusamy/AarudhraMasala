@@ -32,6 +32,7 @@ import CategoryList from '../components/CategoryList';
 import ProductSection from '../components/ProductSection';
 import PromoBanner from '../components/PromoBanner';
 import BannerSection from '../components/BannerSection';
+import HtmlText from '../components/HtmlText';
 
 export default function HomeScreen({ navigation }) {
   const { theme } = useTheme();
@@ -229,7 +230,7 @@ export default function HomeScreen({ navigation }) {
                 const text = typeof item === 'string' ? item : String(item?.pageval ?? '');
                 if (!text) return null;
                 return (
-                  <Text key={item?.id || i} style={styles.footerText}>{text}</Text>
+                  <HtmlText key={item?.id || i} text={text} style={styles.footerText} color="#999" />
                 );
               })}
             </View>

@@ -16,6 +16,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import CachedImage from './CachedImage';
 import { SIZES } from '../constants/theme';
+import HtmlText from './HtmlText';
 
 const AUTO_SCROLL_DELAY = 4000;
 const CARD_SPACING = 10;
@@ -181,7 +182,7 @@ function PromoCarousel({ promos, theme }) {
           </View>
         )}
         <View style={styles.promoOverlay}>
-          <Text style={styles.promoName} numberOfLines={2}>{item.promoname}</Text>
+          <HtmlText text={item.promoname} style={styles.promoName} color="#FFF" numberOfLines={2} />
         </View>
       </View>
     );

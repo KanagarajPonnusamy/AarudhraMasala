@@ -22,6 +22,7 @@ import { useCart } from '../context/CartContext';
 import { useFavourites } from '../context/FavouriteContext';
 import { fetchProduct } from '../services/api';
 import { SIZES } from '../constants/theme';
+import HtmlText from '../components/HtmlText';
 
 const WIDE_BREAKPOINT = 768;
 
@@ -146,9 +147,12 @@ export default function ProductDetailScreen({ navigation, route }) {
 
       {/* Short description on web */}
       {isWide && product.shortdescription ? (
-        <Text style={[styles.webDescriptionSnippet, { color: theme.textSecondary }]} numberOfLines={2}>
-          {product.shortdescription}
-        </Text>
+        <HtmlText
+          text={product.shortdescription}
+          style={[styles.webDescriptionSnippet, { color: theme.textSecondary }]}
+          color={theme.textSecondary}
+          numberOfLines={2}
+        />
       ) : null}
 
       {/* Price */}
@@ -172,11 +176,11 @@ export default function ProductDetailScreen({ navigation, route }) {
 
       {/* Weight Options */}
       {weightOptions.length > 0 && (
-        <View style={styles.weightSection}>
+        <View style={[styles.weightSection, isWide && styles.weightSectionWide]}>
           <Text style={[styles.weightLabel, { color: theme.text }]}>
             Weight : {selectedWeight}
           </Text>
-          <View style={styles.weightRow}>
+          <View style={[styles.weightRow, isWide && styles.weightRowWide]}>
             {weightOptions.map((w) => {
               const isSelected = w === selectedWeight;
               return (
@@ -208,7 +212,7 @@ export default function ProductDetailScreen({ navigation, route }) {
 
       {/* Quantity Selector */}
       {!inCart && (
-        <View style={[styles.qtyContainer, { borderColor: theme.border }]}>
+        <View style={[styles.qtyContainer, { borderColor: theme.border }, isWide && styles.qtyContainerWide]}>
           <TouchableOpacity
             style={[styles.qtyBtn, { backgroundColor: theme.border + '40' }]}
             onPress={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -265,17 +269,21 @@ export default function ProductDetailScreen({ navigation, route }) {
       {/* Description */}
       <View style={styles.detailSection}>
         <Text style={[styles.detailLabel, { color: theme.text }]}>Description</Text>
-        <Text style={[styles.detailValue, { color: theme.textSecondary }]}>
-          {product.description || 'Description not available'}
-        </Text>
+        <HtmlText
+          text={product.description || 'Description not available'}
+          style={[styles.detailValue, { color: theme.textSecondary }]}
+          color={theme.textSecondary}
+        />
       </View>
 
       {/* Manufacturer */}
       <View style={[styles.detailSection, { marginTop: 25 }]}>
         <Text style={[styles.detailLabel, { color: theme.text }]}>Manufacturer</Text>
-        <Text style={[styles.detailValue, { color: theme.textSecondary }]}>
-          {product.manufacturer || 'Not specified'}
-        </Text>
+        <HtmlText
+          text={product.manufacturer || 'Not specified'}
+          style={[styles.detailValue, { color: theme.textSecondary }]}
+          color={theme.textSecondary}
+        />
       </View>
     </View>
   );
@@ -429,6 +437,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 0,
     paddingTop: 8,
+    alignItems: 'flex-start',
   },
   // Web-specific: name row with wishlist
   webNameRow: {
@@ -513,9 +522,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  weightSectionWide: {
+    alignItems: 'flex-start',
+  },
   weightLabel: {
     fontSize: 14,
-    fontWeight: '600',
     marginBottom: 10,
   },
   weightRow: {
@@ -523,6 +534,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 10,
+  },
+  weightRowWide: {
+    justifyContent: 'flex-start',
   },
   weightChip: {
     paddingHorizontal: 16,
@@ -542,6 +556,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     marginBottom: 8,
+  },
+  qtyContainerWide: {
+    alignSelf: 'flex-start',
   },
   qtyBtn: {
     width: 48,

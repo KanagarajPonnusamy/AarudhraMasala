@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 import { SIZES } from '../constants/theme';
 import ProductCard from './ProductCard';
+import HtmlText from './HtmlText';
 
 const GAP = 20;
 
@@ -26,7 +27,7 @@ function ProductSection({ title, products, typecode }) {
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>{title}</Text>
+        <HtmlText text={title} style={[styles.sectionTitle, { color: theme.text }]} color={theme.text} />
         {typecode ? (
           <TouchableOpacity
             onPress={() => navigation.navigate('ProductList', { title, typecode })}

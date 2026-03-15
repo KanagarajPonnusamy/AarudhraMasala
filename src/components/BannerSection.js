@@ -17,6 +17,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import CachedImage from './CachedImage';
 import { SIZES } from '../constants/theme';
+import HtmlText from './HtmlText';
 
 const CARD_SPACING = 12;
 const AUTO_SCROLL_DELAY = 4000;
@@ -129,16 +130,16 @@ function BannerItem({ item, width, isMobile }) {
           />
         ) : null}
         {item.fg_txt ? (
-          <Text
+          <HtmlText
+            text={item.fg_txt}
             style={[
               styles.fgText,
               { color: item.fg_txt_clr || '#000' },
               !hasFgRatio ? { fontSize: 16 } : null,
             ]}
+            color={item.fg_txt_clr || '#000'}
             numberOfLines={3}
-          >
-            {item.fg_txt}
-          </Text>
+          />
         ) : null}
       </View>
     );
