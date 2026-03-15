@@ -19,6 +19,8 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { SIZES } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
+import Header from '../components/Header';
+import Breadcrumb from '../components/Breadcrumb';
 
 function CartItem({ item, theme, updateQuantity, removeFromCart }) {
   return (
@@ -119,24 +121,13 @@ export default function CartScreen({ navigation }) {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-        {/* Header */}
-        <View
-          style={[
-            styles.header,
-            { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
+        <Header navigation={navigation} showBack />
+        <Breadcrumb
+          crumbs={[
+            { label: 'Home', screen: 'Main' },
+            { label: 'Cart' },
           ]}
-        >
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-          >
-            <Feather name="arrow-left" size={24} color={theme.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
-            My Cart ({cartCount})
-          </Text>
-          <View style={{ width: 32 }} />
-        </View>
+        />
 
         {/* Cart List */}
         <FlatList
@@ -190,21 +181,6 @@ export default function CartScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SIZES.padding,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
   },
   listContent: {
     padding: SIZES.padding,

@@ -20,6 +20,8 @@ import { useOrders } from '../context/OrderContext';
 import { useAuth } from '../context/AuthContext';
 import { SIZES } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
+import Header from '../components/Header';
+import Breadcrumb from '../components/Breadcrumb';
 
 function formatDate(isoString) {
   if (!isoString) return '—';
@@ -278,24 +280,13 @@ export default function MyOrdersScreen({ navigation }) {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-        {/* Header */}
-        <View
-          style={[
-            styles.header,
-            { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
+        <Header navigation={navigation} showBack />
+        <Breadcrumb
+          crumbs={[
+            { label: 'Home', screen: 'Main' },
+            { label: 'My Orders' },
           ]}
-        >
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-          >
-            <Feather name="arrow-left" size={24} color={theme.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
-            My Orders
-          </Text>
-          <View style={{ width: 32 }} />
-        </View>
+        />
 
         {!user ? (
           <View style={styles.loginContainer}>
@@ -380,21 +371,6 @@ const trackerStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SIZES.padding,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
   },
   loginContainer: {
     flex: 1,

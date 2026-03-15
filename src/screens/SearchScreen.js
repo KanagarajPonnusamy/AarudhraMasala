@@ -15,6 +15,8 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { SIZES } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
+import Header from '../components/Header';
+import Breadcrumb from '../components/Breadcrumb';
 
 export default function SearchScreen({ navigation }) {
   const { theme } = useTheme();
@@ -24,20 +26,16 @@ export default function SearchScreen({ navigation }) {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      {/* Header */}
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
+      <Header navigation={navigation} showBack />
+      <Breadcrumb
+        crumbs={[
+          { label: 'Home', screen: 'Main' },
+          { label: 'Search' },
         ]}
-      >
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-        >
-          <Feather name="arrow-left" size={24} color={theme.text} />
-        </TouchableOpacity>
+      />
 
+      {/* Search Input */}
+      <View style={[styles.searchBarContainer, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
         <View
           style={[
             styles.searchBar,
@@ -80,19 +78,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  searchBarContainer: {
     paddingHorizontal: SIZES.padding,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    gap: 10,
-  },
-  backBtn: {
-    padding: 4,
   },
   searchBar: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 10,

@@ -9,13 +9,37 @@ import { useTheme } from '../context/ThemeContext';
 import { useCart } from '../context/CartContext';
 import { SIZES } from '../constants/theme';
 
-export default function Header({ navigation, onSearchPress }) {
+export default function Header({ navigation, onSearchPress, showBack }) {
   const { theme } = useTheme();
   const { cartCount } = useCart();
 
+  const handleLeftPress = () => {
+    if (showBack) {
+      navigation.navigate('Main');
+    } else {
+      navigation.openDrawer();
+    }
+  };
+
+  const handleSearchPress = () => {
+    if (onSearchPress) {
+      onSearchPress();
+    } else {
+      navigation.navigate('Search');
+    }
+  };
+
+  const handleCartPress = () => {
+    if (showBack) {
+      navigation.navigate('Cart');
+    } else {
+      navigation.getParent()?.navigate('Cart');
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
-      <TouchableOpacity onPress={() => navigation.openDrawer()} style={styles.iconBtn}>
+      <TouchableOpacity onPress={handleLeftPress} style={styles.iconBtn}>
         <Feather name="menu" size={24} color={theme.text} />
       </TouchableOpacity>
 
@@ -27,13 +51,13 @@ export default function Header({ navigation, onSearchPress }) {
       <View style={styles.rightIcons}>
         <TouchableOpacity
           style={styles.iconBtn}
-          onPress={onSearchPress}
+          onPress={handleSearchPress}
         >
           <Feather name="search" size={22} color={theme.text} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.iconBtn}
-          onPress={() => navigation.getParent()?.navigate('Cart')}
+          onPress={handleCartPress}
         >
           <Feather name="shopping-cart" size={22} color={theme.text} />
           {cartCount > 0 && (

@@ -19,6 +19,8 @@ import { useCart } from '../context/CartContext';
 import { useOrders } from '../context/OrderContext';
 import { useAuth } from '../context/AuthContext';
 import AuthInput from '../components/AuthInput';
+import Header from '../components/Header';
+import Breadcrumb from '../components/Breadcrumb';
 import { SIZES } from '../constants/theme';
 
 export default function CheckoutScreen({ navigation }) {
@@ -183,24 +185,14 @@ export default function CheckoutScreen({ navigation }) {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-        {/* Header */}
-        <View
-          style={[
-            styles.header,
-            { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
+        <Header navigation={navigation} showBack />
+        <Breadcrumb
+          crumbs={[
+            { label: 'Home', screen: 'Main' },
+            { label: 'Cart', screen: 'Cart' },
+            { label: 'Checkout' },
           ]}
-        >
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-          >
-            <Feather name="arrow-left" size={24} color={theme.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
-            Checkout
-          </Text>
-          <View style={{ width: 32 }} />
-        </View>
+        />
 
         <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -375,21 +367,6 @@ export default function CheckoutScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SIZES.padding,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
   },
   scrollContent: {
     padding: SIZES.padding,

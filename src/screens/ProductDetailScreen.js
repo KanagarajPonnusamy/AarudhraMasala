@@ -23,11 +23,13 @@ import { useFavourites } from '../context/FavouriteContext';
 import { fetchProduct } from '../services/api';
 import { SIZES } from '../constants/theme';
 import HtmlText from '../components/HtmlText';
+import Header from '../components/Header';
+import Breadcrumb from '../components/Breadcrumb';
 
 const WIDE_BREAKPOINT = 768;
 
 export default function ProductDetailScreen({ navigation, route }) {
-  const { productId } = route.params;
+  const { productId, categoryName, categoryTypecode } = route.params;
   const { theme } = useTheme();
   const { addToCart, removeFromCart, isInCart } = useCart();
   const { toggleFavourite, isFavourite } = useFavourites();
@@ -59,11 +61,21 @@ export default function ProductDetailScreen({ navigation, route }) {
     return () => { mounted = false; };
   }, [productId]);
 
+  const buildCrumbs = () => {
+    const crumbs = [{ label: 'Home', screen: 'Main' }];
+    if (categoryName) {
+      crumbs.push({ label: categoryName, screen: 'ProductList', params: { title: categoryName, typecode: categoryTypecode } });
+    }
+    crumbs.push({ label: product?.productname || 'Product Details' });
+    return crumbs;
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar style={theme.isDark ? 'light' : 'dark'} />
-        <Header theme={theme} navigation={navigation} />
+        <Header navigation={navigation} showBack />
+        <Breadcrumb crumbs={[{ label: 'Home', screen: 'Main' }, { label: 'Loading...' }]} />
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading...</Text>
@@ -76,7 +88,8 @@ export default function ProductDetailScreen({ navigation, route }) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar style={theme.isDark ? 'light' : 'dark'} />
-        <Header theme={theme} navigation={navigation} />
+        <Header navigation={navigation} showBack />
+        <Breadcrumb crumbs={[{ label: 'Home', screen: 'Main' }, { label: 'Error' }]} />
         <View style={styles.centered}>
           <Feather name="alert-circle" size={48} color={theme.textSecondary} />
           <Text style={[styles.errorText, { color: theme.textSecondary }]}>
@@ -130,7 +143,6 @@ export default function ProductDetailScreen({ navigation, route }) {
 
   const infoSection = (
     <View style={[styles.infoSection, isWide && styles.infoSectionWide]}>
-      {/* Product Name - shown in info section on web */}
       {isWide && (
         <View style={styles.webNameRow}>
           <Text style={[styles.webProductName, { color: theme.text }]}>
@@ -145,7 +157,6 @@ export default function ProductDetailScreen({ navigation, route }) {
         </View>
       )}
 
-      {/* Short description on web */}
       {isWide && product.shortdescription ? (
         <HtmlText
           text={product.shortdescription}
@@ -155,7 +166,6 @@ export default function ProductDetailScreen({ navigation, route }) {
         />
       ) : null}
 
-      {/* Price */}
       <View style={[styles.priceRow, isWide && styles.priceRowWide]}>
         <Text style={[styles.price, { color: theme.primary }, isWide && styles.priceWide]}>
           Rs. {product.offerprice || product.productprice}
@@ -174,7 +184,6 @@ export default function ProductDetailScreen({ navigation, route }) {
         )}
       </View>
 
-      {/* Weight Options */}
       {weightOptions.length > 0 && (
         <View style={[styles.weightSection, isWide && styles.weightSectionWide]}>
           <Text style={[styles.weightLabel, { color: theme.text }]}>
@@ -210,7 +219,6 @@ export default function ProductDetailScreen({ navigation, route }) {
         </View>
       )}
 
-      {/* Quantity Selector */}
       {!inCart && (
         <View style={[styles.qtyContainer, { borderColor: theme.border }, isWide && styles.qtyContainerWide]}>
           <TouchableOpacity
@@ -229,28 +237,21 @@ export default function ProductDetailScreen({ navigation, route }) {
         </View>
       )}
 
-      {/* Cart Actions */}
       {inCart ? (
-        <View style={styles.cartActionRow}>
-          <TouchableOpacity
-            style={[styles.cartButton, { borderColor: theme.accent, backgroundColor: theme.accent }]}
-            onPress={() => removeFromCart(String(product.id))}
-          >
-            <Feather name="x-circle" size={16} color="#FFF" />
-            <Text style={[styles.cartButtonText, { color: '#FFF' }]}>
-              Remove from Cart
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.goToCartBtn, { backgroundColor: theme.primary }]}
-            onPress={() => navigation.navigate('Cart')}
-          >
-            <Feather name="shopping-cart" size={20} color="#FFF" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          activeOpacity={1.0}
+          style={[styles.cartButton, { backgroundColor: theme.accent }]}
+          onPress={() => removeFromCart(String(product.id))}
+        >
+          <Feather name="x-circle" size={16} color="#FFF" />
+          <Text style={[styles.cartButtonText, { color: '#FFF' }]}>
+            Remove from Cart
+          </Text>
+        </TouchableOpacity>
       ) : (
         <TouchableOpacity
-          style={[styles.cartButton, { borderColor: theme.primary, backgroundColor: theme.primary }]}
+          activeOpacity={1.0}
+          style={[styles.cartButton, { backgroundColor: theme.primary }]}
           onPress={() => {
             addToCart(cartItem, quantity);
             setQuantity(1);
@@ -263,10 +264,8 @@ export default function ProductDetailScreen({ navigation, route }) {
         </TouchableOpacity>
       )}
 
-      {/* Divider */}
       <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
-      {/* Description */}
       <View style={styles.detailSection}>
         <Text style={[styles.detailLabel, { color: theme.text }]}>Description</Text>
         <HtmlText
@@ -276,7 +275,6 @@ export default function ProductDetailScreen({ navigation, route }) {
         />
       </View>
 
-      {/* Manufacturer */}
       <View style={[styles.detailSection, { marginTop: 25 }]}>
         <Text style={[styles.detailLabel, { color: theme.text }]}>Manufacturer</Text>
         <HtmlText
@@ -291,7 +289,8 @@ export default function ProductDetailScreen({ navigation, route }) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar style={theme.isDark ? 'light' : 'dark'} />
-      <Header theme={theme} navigation={navigation} title={isWide ? '' : product.productname} />
+      <Header navigation={navigation} showBack />
+      <Breadcrumb crumbs={buildCrumbs()} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, isWide && styles.scrollContentWide]}>
         {isWide ? (
@@ -307,20 +306,6 @@ export default function ProductDetailScreen({ navigation, route }) {
         )}
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function Header({ theme, navigation, title }) {
-  return (
-    <View style={[styles.header, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-        <Feather name="arrow-left" size={24} color={theme.text} />
-      </TouchableOpacity>
-      <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>
-        {title || 'Product Details'}
-      </Text>
-      <View style={styles.backBtn} />
-    </View>
   );
 }
 
@@ -341,26 +326,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SIZES.padding,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
   scrollContent: {
     paddingBottom: 30,
   },
@@ -368,13 +333,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingTop: 30,
   },
-  // Wide (web) side-by-side layout
   wideLayout: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 40,
   },
-  // Image section
   imageContainer: {
     alignItems: 'center',
     paddingVertical: 24,
@@ -428,7 +391,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  // Info section
   infoSection: {
     padding: SIZES.padding,
     alignItems: 'center',
@@ -439,7 +401,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     alignItems: 'flex-start',
   },
-  // Web-specific: name row with wishlist
   webNameRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -466,7 +427,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 16,
   },
-  // Price
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -586,7 +546,6 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: 8,
-    borderWidth: 1.5,
     marginTop: 8,
   },
   cartButtonText: {

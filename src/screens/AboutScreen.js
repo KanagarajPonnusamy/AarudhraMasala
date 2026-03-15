@@ -9,26 +9,26 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { SIZES } from '../constants/theme';
+import Header from '../components/Header';
+import Breadcrumb from '../components/Breadcrumb';
 
 export default function AboutScreen({ navigation }) {
   const { theme } = useTheme();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={24} color={theme.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>About Us</Text>
-        <View style={styles.backBtn} />
-      </View>
+      <Header navigation={navigation} showBack />
+      <Breadcrumb
+        crumbs={[
+          { label: 'Home', screen: 'Main' },
+          { label: 'About Us' },
+        ]}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -103,22 +103,6 @@ export default function AboutScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    paddingHorizontal: SIZES.padding,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  backBtn: {
-    padding: 4,
-    width: 32,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
   },
   scrollContent: {
     paddingBottom: 30,

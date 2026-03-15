@@ -8,16 +8,16 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   Platform,
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { fetchProductsByCode } from '../services/api';
 import ProductCard from '../components/ProductCard';
+import Header from '../components/Header';
+import Breadcrumb from '../components/Breadcrumb';
 import { SIZES } from '../constants/theme';
 
 const GAP = 20;
@@ -73,20 +73,13 @@ export default function ProductListScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: theme.headerBg, borderBottomColor: theme.border },
+      <Header navigation={navigation} showBack />
+      <Breadcrumb
+        crumbs={[
+          { label: 'Home', screen: 'Main' },
+          { label: title || 'Products' },
         ]}
-      >
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={24} color={theme.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]} numberOfLines={1}>
-          {title || 'Products'}
-        </Text>
-        <View style={{ width: 32 }} />
-      </View>
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -112,7 +105,7 @@ export default function ProductListScreen({ navigation, route }) {
               <View key={item.id} style={{ width: cardWidth }}>
                 <ProductCard
                   product={item}
-                  onPress={() => item.productId && navigation.navigate('ProductDetail', { productId: item.productId })}
+                  onPress={() => item.productId && navigation.navigate('ProductDetail', { productId: item.productId, categoryName: title, categoryTypecode: typecode })}
                 />
               </View>
             ))}
@@ -126,23 +119,6 @@ export default function ProductListScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SIZES.padding,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    flex: 1,
-    textAlign: 'center',
   },
   scrollContent: {
     padding: SIZES.padding,
