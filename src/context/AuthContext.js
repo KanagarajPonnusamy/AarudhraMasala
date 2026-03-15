@@ -72,13 +72,25 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const data = await loginUser(email, password);
+    console.log('[Auth] Login API raw response:', JSON.stringify(data));
     const userData = {
       ...data,
       email,
       user_id: data.id || data.user_id || '',
       firstname: data.firstname || data.firstName || email.split('@')[0],
       lastname: data.lastname || data.lastName || '',
+      phone: data.phone_no || data.phone || '',
+      address1: data.address1 || '',
+      address2: data.address2 || '',
+      address3: data.address3 || '',
+      city: data.city || '',
+      state: data.state || '',
+      pincode: data.pincode || '',
     };
+    console.log('[Auth] Saved userData address:', JSON.stringify({
+      address1: userData.address1, address2: userData.address2, address3: userData.address3,
+      city: userData.city, state: userData.state, pincode: userData.pincode,
+    }));
     setUser(userData);
     await saveUser(userData);
     // Re-fetch admin token with user-id now that user is logged in

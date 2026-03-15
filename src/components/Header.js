@@ -15,7 +15,7 @@ export default function Header({ navigation, onSearchPress, showBack }) {
 
   const handleLeftPress = () => {
     if (showBack) {
-      navigation.navigate('Main');
+      navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } else {
       navigation.openDrawer();
     }
@@ -39,14 +39,22 @@ export default function Header({ navigation, onSearchPress, showBack }) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
-      <TouchableOpacity onPress={handleLeftPress} style={styles.iconBtn}>
-        <Feather name="menu" size={24} color={theme.text} />
-      </TouchableOpacity>
-
-      <View style={styles.logoContainer}>
-        <Text style={[styles.logoText, { color: theme.primary }]}>Aarudhra</Text>
-        <Text style={[styles.logoSubText, { color: theme.text }]}>MASALA</Text>
-      </View>
+      {showBack ? (
+        <TouchableOpacity onPress={handleLeftPress} style={styles.logoContainer}>
+          <Text style={[styles.logoText, { color: theme.primary }]}>Aarudhra</Text>
+          <Text style={[styles.logoSubText, { color: theme.text }]}>MASALA</Text>
+        </TouchableOpacity>
+      ) : (
+        <>
+          <TouchableOpacity onPress={handleLeftPress} style={styles.iconBtn}>
+            <Feather name="menu" size={24} color={theme.text} />
+          </TouchableOpacity>
+          <View style={styles.logoContainer}>
+            <Text style={[styles.logoText, { color: theme.primary }]}>Aarudhra</Text>
+            <Text style={[styles.logoSubText, { color: theme.text }]}>MASALA</Text>
+          </View>
+        </>
+      )}
 
       <View style={styles.rightIcons}>
         <TouchableOpacity

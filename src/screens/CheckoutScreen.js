@@ -2,7 +2,7 @@
  * Created by: Kanagaraj P
  * Created on: 03-03-2026
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -40,17 +40,47 @@ export default function CheckoutScreen({ navigation }) {
   const [pincodeAutoFilled, setPincodeAutoFilled] = useState(false);
   const [errors, setErrors] = useState({});
   const [placing, setPlacing] = useState(false);
+  const addressPreFilled = useRef(false);
 
+  // Pre-fill address from user's saved data (login API response)
   useEffect(() => {
-    if (pincode.length === 6) {
-      fetchPincodeDetails(pincode);
+    console.log('[Checkout] user object:', JSON.stringify({
+      address1: user?.address1, address2: user?.address2, address3: user?.address3,
+      city: user?.city, state: user?.state, pincode: user?.pincode,
+      addressPreFilled: addressPreFilled.current,
+    }));
+    if (user && !addressPreFilled.current) {
+      addressPreFilled.current = true;
+      if (user.address1 || user.address2 || user.address3 || user.pincode) {
+        console.log('[Checkout] Pre-filling address from user data');
+        setBuilding(user.address1 || '');
+        setStreet1(user.address2 || '');
+        setStreet2(user.address3 || '');
+        setPincode(user.pincode || '');
+        setCity(user.city || '');
+        setState(user.state || '');
+        setCountry('India');
+        setPincodeAutoFilled(true);
+      } else {
+        console.log('[Checkout] No address data found on user object');
+      }
+    }
+  }, [user]);
+
+  // Handle pincode input — lookup city/state from pincode API
+  const handlePincodeChange = (text) => {
+    const digits = text.replace(/[^0-9]/g, '').slice(0, 6);
+    setPincode(digits);
+    if (errors.pincode) setErrors((prev) => ({ ...prev, pincode: null }));
+    if (digits.length === 6) {
+      fetchPincodeDetails(digits);
     } else {
       setCity('');
       setState('');
       setCountry('');
       setPincodeAutoFilled(false);
     }
-  }, [pincode]);
+  };
 
   const fetchPincodeDetails = async (code) => {
     setPincodeLoading(true);
@@ -258,11 +288,7 @@ export default function CheckoutScreen({ navigation }) {
             icon="hash"
             placeholder="6-digit pincode"
             value={pincode}
-            onChangeText={(text) => {
-              const digits = text.replace(/[^0-9]/g, '').slice(0, 6);
-              setPincode(digits);
-              if (errors.pincode) setErrors((prev) => ({ ...prev, pincode: null }));
-            }}
+            onChangeText={handlePincodeChange}
             keyboardType="numeric"
             error={errors.pincode}
           />
