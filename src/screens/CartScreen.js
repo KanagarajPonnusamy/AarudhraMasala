@@ -159,12 +159,38 @@ export default function CartScreen({ navigation }) {
           >
             <View style={styles.totalRow}>
               <Text style={[styles.totalLabel, { color: theme.textSecondary }]}>
-                Total ({cartCount} {cartCount === 1 ? 'item' : 'items'})
+                Subtotal ({cartCount} {cartCount === 1 ? 'item' : 'items'})
               </Text>
-              <Text style={[styles.totalAmount, { color: theme.primary }]}>
+              <Text style={[styles.totalRowValue, { color: theme.text }]}>
                 ₹{cartTotal}
               </Text>
             </View>
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, { color: theme.textSecondary }]}>
+                Shipping
+              </Text>
+              {cartTotal < 1000 ? (
+                <Text style={[styles.totalRowValue, { color: theme.text }]}>₹49</Text>
+              ) : (
+                <Text style={[styles.totalRowValue, { color: theme.primary }]}>FREE</Text>
+              )}
+            </View>
+            <View style={[styles.totalRow, styles.grandTotalRow, { borderTopColor: theme.border }]}>
+              <Text style={[styles.grandTotalLabel, { color: theme.text }]}>
+                Total
+              </Text>
+              <Text style={[styles.totalAmount, { color: theme.primary }]}>
+                ₹{cartTotal < 1000 ? cartTotal + 49 : cartTotal}
+              </Text>
+            </View>
+            {cartTotal < 1000 && (
+              <Text style={[styles.freeShippingHint, { color: theme.primary }]}>
+                Add ₹{1000 - cartTotal} more for free shipping
+              </Text>
+            )}
+            <Text style={[styles.gstNote, { color: theme.textSecondary }]}>
+              GST and shipping charges are calculated at checkout.
+            </Text>
             <TouchableOpacity
               style={[styles.checkoutBtn, { backgroundColor: theme.primary }]}
               onPress={handleCheckout}
@@ -270,12 +296,34 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   totalLabel: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500',
   },
+  totalRowValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  grandTotalRow: {
+    borderTopWidth: 1,
+    paddingTop: 10,
+    marginTop: 4,
+  },
+  grandTotalLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
   totalAmount: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '900',
+  },
+  freeShippingHint: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  gstNote: {
+    fontSize: 12,
+    marginBottom: 12,
   },
   checkoutBtn: {
     flexDirection: 'row',

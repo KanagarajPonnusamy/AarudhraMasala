@@ -7,7 +7,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ImageBackground,
   TouchableOpacity,
   Animated,
   Linking,
@@ -155,13 +154,13 @@ function BannerItem({ item, width, isMobile }) {
 
   const content = item.bg_img ? (
     <View style={{ width, height: bgHeight, backgroundColor: item.bg_clr || 'transparent' }}>
-      <ImageBackground
+      <CachedImage
         source={{ uri: item.bg_img }}
-        style={{ width, height: bgHeight }}
-        resizeMode="cover"
-      >
-        {innerContent}
-      </ImageBackground>
+        style={[StyleSheet.absoluteFill, { width, height: bgHeight }]}
+        contentFit="cover"
+        priority="high"
+      />
+      {innerContent}
     </View>
   ) : (
     <View style={[styles.bgContainer, { height: bgHeight, backgroundColor: item.bg_clr || 'transparent' }]}>

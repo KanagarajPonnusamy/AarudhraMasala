@@ -57,62 +57,45 @@ export default function AppNavigator() {
             'Aarudhra Masala | Masala powder | Indian masala | Homemade masala powder | Authentic Indian spices | Traditional masala blends | Organic masala powder | Pure spice powder',
         }}
       >
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Main" component={DrawerNavigator} />
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: theme.background },
+            animation: 'ios_from_right',
+            animationDuration: 250,
+          }}
+        >
+          <Stack.Screen name="Main" component={DrawerNavigator} options={{ animation: 'none' }} />
           <Stack.Screen
             name="Login"
             component={LoginScreen}
-            options={{ animation: 'slide_from_bottom' }}
+            options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
           />
           <Stack.Screen
             name="Register"
             component={RegisterScreen}
-            options={{ animation: 'slide_from_right' }}
+            options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
           />
-          <Stack.Screen
-            name="Cart"
-            component={CartScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="Checkout"
-            component={CheckoutScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
+          <Stack.Screen name="Cart" component={CartScreen} />
+          <Stack.Screen name="Checkout" component={CheckoutScreen} />
           <Stack.Screen
             name="OrderSuccess"
             component={OrderSuccessScreen}
-            options={{ animation: 'slide_from_right' }}
+            options={{ animation: 'fade_from_bottom' }}
           />
-          <Stack.Screen
-            name="MyOrders"
-            component={MyOrdersScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
+          <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
           <Stack.Screen
             name="Search"
             component={SearchScreen}
-            options={{ animation: 'slide_from_right' }}
+            options={{ animation: 'fade' }}
           />
-          <Stack.Screen
-            name="Favourites"
-            component={FavouritesScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="About"
-            component={AboutScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="ProductList"
-            component={ProductListScreen}
-            options={{ animation: 'slide_from_right' }}
-          />
+          <Stack.Screen name="Favourites" component={FavouritesScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
+          <Stack.Screen name="ProductList" component={ProductListScreen} />
           <Stack.Screen
             name="ProductDetail"
             component={ProductDetailScreen}
-            options={{ animation: 'slide_from_right' }}
+            options={{ animation: 'fade_from_bottom', animationDuration: 200 }}
           />
         </Stack.Navigator>
       </NavigationContainer>

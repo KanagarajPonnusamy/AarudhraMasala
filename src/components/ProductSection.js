@@ -41,7 +41,12 @@ function ProductSection({ title, products, typecode }) {
           <View key={item.id} style={{ width: cardWidth }}>
             <ProductCard
               product={item}
-              onPress={() => item.productId && navigation.navigate('ProductDetail', { productId: item.productId, categoryName: title, categoryTypecode: typecode })}
+              onPress={() => item.productId && navigation.navigate('ProductDetail', {
+                productId: item.productId,
+                categoryName: title,
+                categoryTypecode: typecode,
+                preview: { name: item.name, price: item.price, originalPrice: item.originalPrice, image: item.image, category: item.category },
+              })}
             />
           </View>
         ))}

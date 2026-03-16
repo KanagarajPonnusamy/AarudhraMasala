@@ -139,6 +139,14 @@ function OrderCard({ order, theme }) {
   const itemCount = order.orderdetails?.length || 0;
   const isCancelled = order.orderstatus === 'CANCELLED' || order.status === 'Cancelled';
 
+  const subtotal = (order.orderdetails || []).reduce((sum, d) => {
+    const price = parseFloat(d.productprice) || 0;
+    const qty = parseInt(d.quantity, 10) || 1;
+    return sum + price * qty;
+  }, 0);
+  const total = parseFloat(order.total_amount) || 0;
+  const shippingCharge = Math.max(0, Math.round((total - subtotal) * 100) / 100);
+
   return (
     <View
       style={[
@@ -225,6 +233,27 @@ function OrderCard({ order, theme }) {
         </View>
       ))}
 
+      {/* Pricing Breakdown */}
+      <View style={[styles.pricingSection, { borderTopColor: theme.border }]}>
+        <View style={styles.pricingRow}>
+          <Text style={[styles.pricingLabel, { color: theme.textSecondary }]}>Subtotal</Text>
+          <Text style={[styles.pricingValue, { color: theme.text }]}>₹{subtotal}</Text>
+        </View>
+        <View style={styles.pricingRow}>
+          <Text style={[styles.pricingLabel, { color: theme.textSecondary }]}>Shipping</Text>
+          {shippingCharge > 0 ? (
+            <Text style={[styles.pricingValue, { color: theme.text }]}>₹{shippingCharge}</Text>
+          ) : (
+            <Text style={[styles.pricingValue, { color: theme.primary, fontWeight: '700' }]}>FREE</Text>
+          )}
+        </View>
+        <View style={[styles.pricingDivider, { backgroundColor: theme.border }]} />
+        <View style={styles.pricingRow}>
+          <Text style={[styles.pricingTotalLabel, { color: theme.text }]}>Total</Text>
+          <Text style={[styles.totalAmount, { color: theme.primary }]}>₹{total}</Text>
+        </View>
+      </View>
+
       {/* Footer */}
       <View style={[styles.cardFooter, { borderTopColor: theme.border }]}>
         <Feather name="map-pin" size={14} color={theme.textSecondary} />
@@ -233,9 +262,6 @@ function OrderCard({ order, theme }) {
           numberOfLines={1}
         >
           {order.shippingaddress || '—'}
-        </Text>
-        <Text style={[styles.totalAmount, { color: theme.primary }]}>
-          ₹{order.total_amount}
         </Text>
       </View>
     </View>
@@ -508,21 +534,47 @@ const styles = StyleSheet.create({
     minWidth: 50,
     textAlign: 'right',
   },
+  pricingSection: {
+    borderTopWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginTop: 4,
+    gap: 6,
+  },
+  pricingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pricingLabel: {
+    fontSize: 13,
+  },
+  pricingValue: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  pricingDivider: {
+    height: 1,
+    marginVertical: 2,
+  },
+  pricingTotalLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  totalAmount: {
+    fontSize: 18,
+    fontWeight: '900',
+  },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderTopWidth: 1,
-    marginTop: 6,
     gap: 6,
   },
   addressText: {
     flex: 1,
     fontSize: 12,
-  },
-  totalAmount: {
-    fontSize: 18,
-    fontWeight: '900',
   },
 });

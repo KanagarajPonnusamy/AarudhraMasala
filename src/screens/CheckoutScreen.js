@@ -152,9 +152,13 @@ export default function CheckoutScreen({ navigation }) {
       .filter(Boolean)
       .join(', ');
 
+    const shippingCharge = cartTotal < 1000 ? 49 : 0;
+    const orderTotal = cartTotal + shippingCharge;
+
     const userid = Number(user?.user_id) || 0;
     const order = getOrderObject();
     order.order.userid = userid;
+    order.order.total_amount = orderTotal;
     order.order.shippingaddress = address;
     order.order.billingaddress = address;
     order.order.pincode = pincode;
@@ -195,7 +199,7 @@ export default function CheckoutScreen({ navigation }) {
           state,
           country,
         },
-        totalAmount: cartTotal,
+        totalAmount: orderTotal,
         originalAmount: originalTotal,
         paymentMethod: 'Cash on Delivery',
         items: itemsList,
@@ -236,12 +240,38 @@ export default function CheckoutScreen({ navigation }) {
             { backgroundColor: theme.card, borderColor: theme.border },
           ]}
         >
-          <Feather name="shopping-bag" size={20} color={theme.primary} />
-          <Text style={[styles.summaryText, { color: theme.text }]}>
-            {cartCount} {cartCount === 1 ? 'item' : 'items'}
-          </Text>
-          <Text style={[styles.summaryAmount, { color: theme.primary }]}>
-            ₹{cartTotal}
+          <View style={styles.summaryRow}>
+            <Feather name="shopping-bag" size={18} color={theme.primary} />
+            <Text style={[styles.summaryText, { color: theme.text }]}>
+              Subtotal ({cartCount} {cartCount === 1 ? 'item' : 'items'})
+            </Text>
+            <Text style={[styles.summaryRowValue, { color: theme.text }]}>
+              ₹{cartTotal}
+            </Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Feather name="truck" size={18} color={theme.primary} />
+            <Text style={[styles.summaryText, { color: theme.text }]}>
+              Shipping
+            </Text>
+            {cartTotal < 1000 ? (
+              <Text style={[styles.summaryRowValue, { color: theme.text }]}>₹49</Text>
+            ) : (
+              <Text style={[styles.summaryRowValue, { color: theme.primary }]}>FREE</Text>
+            )}
+          </View>
+          <View style={[styles.summaryDivider, { backgroundColor: theme.border }]} />
+          <View style={styles.summaryRow}>
+            <Feather name="credit-card" size={18} color={theme.primary} />
+            <Text style={[styles.summaryTotalLabel, { color: theme.text }]}>
+              Total
+            </Text>
+            <Text style={[styles.summaryAmount, { color: theme.primary }]}>
+              ₹{cartTotal < 1000 ? cartTotal + 49 : cartTotal}
+            </Text>
+          </View>
+          <Text style={[styles.gstNote, { color: theme.textSecondary }]}>
+            GST and shipping charges are calculated at checkout.
           </Text>
         </View>
 
@@ -399,22 +429,42 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   summaryCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     padding: 14,
     borderRadius: SIZES.radius,
     borderWidth: 1,
     marginBottom: 20,
     gap: 10,
   },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   summaryText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  summaryRowValue: {
+    fontSize: 14,
     fontWeight: '600',
+  },
+  summaryDivider: {
+    height: 1,
+    marginVertical: 2,
+  },
+  summaryTotalLabel: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
   },
   summaryAmount: {
     fontSize: 20,
     fontWeight: '900',
+  },
+  gstNote: {
+    fontSize: 12,
+    marginTop: 2,
   },
   sectionTitle: {
     fontSize: 16,

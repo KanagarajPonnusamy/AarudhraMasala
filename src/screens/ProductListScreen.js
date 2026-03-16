@@ -47,20 +47,39 @@ export default function ProductListScreen({ navigation, route }) {
           : await fetchProductsByCode(typecode);
         if (mounted && Array.isArray(data)) {
           setProducts(
-            data.map((p, i) => ({
-              id: String(p.id || i),
-              productId: p.id,
-              name: p.productname || '',
-              weight: '',
-              price: p.offerprice || p.productprice || 0,
-              originalPrice: p.productprice || 0,
-              rating: 4.5,
-              reviews: 0,
-              image: p.producturl || '',
-              category: p.productcategory || '',
-              badge: null,
-              productcode: p.productcode || '',
-            }))
+            data.map((p, i) => {
+              let weight = '';
+              let price = p.offerprice || p.productprice || 0;
+              let originalPrice = p.productprice || 0;
+              if (p.quantity) {
+                const firstEntry = p.quantity.split('|')[0]?.trim();
+                if (firstEntry) {
+                  const parts = firstEntry.split('-');
+                  weight = parts[0] || '';
+                  const pp = parseFloat(parts[1]) || 0;
+                  const op = parts[2] ? parseFloat(parts[2]) : null;
+                  if (pp > 0) {
+                    price = op || pp;
+                    originalPrice = pp;
+                  }
+                }
+              }
+              return {
+                id: String(p.id || i),
+                productId: p.id,
+                name: p.productname || '',
+                weight,
+                price,
+                originalPrice,
+                rating: 4.5,
+                reviews: 0,
+                image: p.producturl || '',
+                category: p.productcategory || '',
+                badge: null,
+                productcode: p.productcode || '',
+                quantity: p.quantity || '',
+              };
+            })
           );
         }
       } catch (e) {
@@ -107,7 +126,12 @@ export default function ProductListScreen({ navigation, route }) {
               <View key={item.id} style={{ width: cardWidth }}>
                 <ProductCard
                   product={item}
-                  onPress={() => item.productId && navigation.navigate('ProductDetail', { productId: item.productId, categoryName: title, categoryTypecode: typecode })}
+                  onPress={() => item.productId && navigation.navigate('ProductDetail', {
+                    productId: item.productId,
+                    categoryName: title,
+                    categoryTypecode: typecode,
+                    preview: { name: item.name, price: item.price, originalPrice: item.originalPrice, image: item.image, category: item.category },
+                  })}
                 />
               </View>
             ))}

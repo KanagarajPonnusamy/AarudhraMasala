@@ -32,7 +32,7 @@ import Breadcrumb from '../components/Breadcrumb';
 const WIDE_BREAKPOINT = 768;
 
 export default function ProductDetailScreen({ navigation, route }) {
-  const { productId, categoryName, categoryTypecode } = route.params;
+  const { productId, categoryName, categoryTypecode, preview } = route.params;
   const { theme } = useTheme();
   const { addToCart, removeFromCart, isInCart } = useCart();
   const { toggleFavourite, isFavourite } = useFavourites();
@@ -44,6 +44,7 @@ export default function ProductDetailScreen({ navigation, route }) {
   const [imageZoomVisible, setImageZoomVisible] = useState(false);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const isWide = Platform.OS === 'web' && screenWidth >= WIDE_BREAKPOINT;
+  const hasPreview = !!(preview && preview.name);
 
   // Zoom gesture values
   const scale = useSharedValue(1);
@@ -140,11 +141,11 @@ export default function ProductDetailScreen({ navigation, route }) {
     if (categoryName) {
       crumbs.push({ label: categoryName, screen: 'ProductList', params: { title: categoryName, typecode: categoryTypecode } });
     }
-    crumbs.push({ label: product?.productname || 'Product Details' });
+    crumbs.push({ label: product?.productname || preview?.name || 'Product Details' });
     return crumbs;
   };
 
-  if (loading) {
+  if (loading && !hasPreview) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar style={theme.isDark ? 'light' : 'dark'} />
@@ -158,7 +159,7 @@ export default function ProductDetailScreen({ navigation, route }) {
     );
   }
 
-  if (error || !product) {
+  if (error && !product && !hasPreview) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar style={theme.isDark ? 'light' : 'dark'} />
@@ -174,9 +175,16 @@ export default function ProductDetailScreen({ navigation, route }) {
     );
   }
 
+  // Use full product data when available, fall back to preview
+  const p = product || {};
+  const pName = p.productname || preview?.name || '';
+  const pImage = p.producturl || preview?.image || '';
+  const pCategory = p.productcategory || preview?.category || '';
+  const pId = String(p.id || productId);
+
   // Parse quantity: "weight-productprice-offerprice|..." format
-  const weightOptions = product.quantity
-    ? product.quantity.split('|').map((entry) => {
+  const weightOptions = p.quantity
+    ? p.quantity.split('|').map((entry) => {
         const parts = entry.trim().split('-');
         const weight = parts[0] || '';
         const productPrice = parseFloat(parts[1]) || 0;
@@ -189,28 +197,28 @@ export default function ProductDetailScreen({ navigation, route }) {
   const hasParsedPrices = selectedOption && selectedOption.productPrice > 0;
   const displayPrice = hasParsedPrices
     ? (selectedOption.offerPrice || selectedOption.productPrice)
-    : (product.offerprice || product.productprice);
+    : (p.offerprice || p.productprice || preview?.price || 0);
   const displayOriginalPrice = hasParsedPrices
     ? selectedOption.productPrice
-    : product.productprice;
+    : (p.productprice || preview?.originalPrice || 0);
   const discount = displayOriginalPrice && displayPrice < displayOriginalPrice
     ? Math.round(((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100)
     : 0;
 
   const cartItem = {
-    id: String(product.id),
-    name: product.productname,
+    id: pId,
+    name: pName,
     price: displayPrice,
     originalPrice: displayOriginalPrice,
-    image: product.producturl,
-    category: product.productcategory,
-    productcode: product.productcode,
+    image: pImage,
+    category: pCategory,
+    productcode: p.productcode || '',
     weight: selectedWeight || '',
     quantity_val: selectedWeight || '',
   };
 
-  const inCart = isInCart(String(product.id));
-  const liked = isFavourite(String(product.id));
+  const inCart = isInCart(pId);
+  const liked = isFavourite(pId);
 
   const imageSection = (
     <View style={[styles.imageContainer, { backgroundColor: theme.card }, isWide && styles.imageContainerWide]}>
@@ -229,7 +237,7 @@ export default function ProductDetailScreen({ navigation, route }) {
           savedTranslateY.value = 0;
           setImageZoomVisible(true);
         }}>
-          <CachedImage source={{ uri: product.producturl }} style={[styles.productImage, isWide && styles.productImageWide]} />
+          <CachedImage source={{ uri: pImage }} style={[styles.productImage, isWide && styles.productImageWide]} priority="high" />
         </TouchableOpacity>
         {!isWide && (
           <TouchableOpacity
@@ -248,7 +256,7 @@ export default function ProductDetailScreen({ navigation, route }) {
       {isWide && (
         <View style={styles.webNameRow}>
           <Text style={[styles.webProductName, { color: theme.text }]}>
-            {product.productname}
+            {pName}
           </Text>
           <TouchableOpacity
             style={[styles.webWishlistBtn, { backgroundColor: liked ? theme.accent : theme.surface }]}
@@ -259,9 +267,9 @@ export default function ProductDetailScreen({ navigation, route }) {
         </View>
       )}
 
-      {isWide && product.shortdescription ? (
+      {isWide && p.shortdescription ? (
         <HtmlText
-          text={product.shortdescription}
+          text={p.shortdescription}
           style={[styles.webDescriptionSnippet, { color: theme.textSecondary }]}
           color={theme.textSecondary}
           numberOfLines={2}
@@ -343,7 +351,7 @@ export default function ProductDetailScreen({ navigation, route }) {
         <TouchableOpacity
           activeOpacity={1.0}
           style={[styles.cartButton, { backgroundColor: theme.accent }]}
-          onPress={() => removeFromCart(String(product.id))}
+          onPress={() => removeFromCart(pId)}
         >
           <Feather name="x-circle" size={16} color="#FFF" />
           <Text style={[styles.cartButtonText, { color: '#FFF' }]}>
@@ -370,20 +378,28 @@ export default function ProductDetailScreen({ navigation, route }) {
 
       <View style={styles.detailSection}>
         <Text style={[styles.detailLabel, { color: theme.text }]}>Description</Text>
-        <HtmlText
-          text={product.description || 'Description not available'}
-          style={[styles.detailValue, { color: theme.textSecondary }]}
-          color={theme.textSecondary}
-        />
+        {loading ? (
+          <ActivityIndicator size="small" color={theme.primary} style={{ marginTop: 8 }} />
+        ) : (
+          <HtmlText
+            text={p.description || 'Description not available'}
+            style={[styles.detailValue, { color: theme.textSecondary }]}
+            color={theme.textSecondary}
+          />
+        )}
       </View>
 
       <View style={[styles.detailSection, { marginTop: 25 }]}>
         <Text style={[styles.detailLabel, { color: theme.text }]}>Manufacturer</Text>
-        <HtmlText
-          text={product.manufacturer || 'Not specified'}
-          style={[styles.detailValue, { color: theme.textSecondary }]}
-          color={theme.textSecondary}
-        />
+        {loading ? (
+          <ActivityIndicator size="small" color={theme.primary} style={{ marginTop: 8 }} />
+        ) : (
+          <HtmlText
+            text={p.manufacturer || 'Not specified'}
+            style={[styles.detailValue, { color: theme.textSecondary }]}
+            color={theme.textSecondary}
+          />
+        )}
       </View>
     </View>
   );
@@ -425,7 +441,7 @@ export default function ProductDetailScreen({ navigation, route }) {
           <GestureDetector gesture={composedGesture}>
             <Animated.View style={[styles.zoomImageContainer, zoomAnimatedStyle]}>
               <CachedImage
-                source={{ uri: product.producturl }}
+                source={{ uri: pImage }}
                 style={{ width: screenWidth, height: screenHeight * 0.7 }}
                 contentFit="contain"
               />

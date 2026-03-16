@@ -38,7 +38,7 @@ export default function CategoryList({ categories, title }) {
   const renderCategory = useCallback(({ item }) => (
     <TouchableOpacity style={styles.categoryItem} onPress={() => handleCategoryPress(item)}>
       <View style={[styles.categoryIcon, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
-        <CachedImage source={{ uri: item.icon }} style={styles.categoryImage} contentFit="cover" />
+        <CachedImage source={{ uri: item.icon }} style={styles.categoryImage} contentFit="cover" priority="high" />
       </View>
       <HtmlText text={item.name} style={[styles.categoryName, { color: theme.text }]} color={theme.text} numberOfLines={2} />
     </TouchableOpacity>

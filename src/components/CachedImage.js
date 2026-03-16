@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image } from 'expo-image';
 
-export default function CachedImage({ source, style, contentFit, ...rest }) {
+function CachedImage({ source, style, contentFit, priority, recyclingKey, ...rest }) {
   const uri = source?.uri;
   if (!uri) return null;
 
@@ -11,10 +11,14 @@ export default function CachedImage({ source, style, contentFit, ...rest }) {
       style={style}
       contentFit={contentFit || 'cover'}
       cachePolicy="memory-disk"
-      transition={200}
+      transition={100}
+      priority={priority || 'normal'}
+      recyclingKey={recyclingKey}
       placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
       placeholderContentFit="cover"
       {...rest}
     />
   );
 }
+
+export default React.memo(CachedImage);

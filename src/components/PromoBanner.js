@@ -172,7 +172,7 @@ function PromoCarousel({ promos, theme }) {
     return (
       <View style={[styles.promoCard, { width: cardWidth, height: cardHeight, backgroundColor: bgColor }]}>
         {imageUri ? (
-          <CachedImage source={{ uri: imageUri }} style={styles.promoImage} contentFit="cover" />
+          <CachedImage source={{ uri: imageUri }} style={styles.promoImage} contentFit="cover" priority="high" />
         ) : (
           <View style={styles.promoIconArea}>
             <View style={styles.promoIconCircle}>

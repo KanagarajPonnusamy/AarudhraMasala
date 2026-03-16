@@ -2,35 +2,27 @@
  * Created by: Kanagaraj P
  * Created on: 01-03-2026
  */
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import CachedImage from './CachedImage';
 import { useCart } from '../context/CartContext';
 import { useFavourites } from '../context/FavouriteContext';
+import CachedImage from './CachedImage';
 import { SIZES } from '../constants/theme';
 import HtmlText from './HtmlText';
 
-function ProductCard({ product, style, onPress }) {
+/**
+ * Pure ProductCard — does NOT subscribe to Cart/Favourite contexts.
+ * Receives cart/fav state as props so React.memo can skip re-renders
+ * when this specific card's state hasn't changed.
+ */
+function ProductCard({ product, style, onPress, inCart, liked, onCartPress, onFavouritePress }) {
   const { theme } = useTheme();
-  const { addToCart, removeFromCart, isInCart } = useCart();
-  const { toggleFavourite, isFavourite } = useFavourites();
   const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
-  const inCart = isInCart(product.id);
-  const liked = isFavourite(product.id);
-
-  const handleCartPress = () => {
-    if (inCart) {
-      removeFromCart(product.id);
-    } else {
-      addToCart(product);
-    }
-  };
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
+    <Pressable
       onPress={onPress}
       style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border, shadowColor: theme.shadowColor }, style]}
     >
@@ -46,12 +38,12 @@ function ProductCard({ product, style, onPress }) {
             <Text style={styles.discountText}>-{discount}%</Text>
           </View>
         )}
-        <TouchableOpacity
+        <Pressable
           style={[styles.wishlistBtn, { backgroundColor: liked ? theme.accent : theme.surface }]}
-          onPress={() => toggleFavourite(product)}
+          onPress={onFavouritePress}
         >
           <Feather name="heart" size={16} color={liked ? '#FFF' : theme.textSecondary} />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       <View style={styles.info}>
@@ -74,8 +66,8 @@ function ProductCard({ product, style, onPress }) {
           )}
         </View>
 
-        <TouchableOpacity
-          onPress={handleCartPress}
+        <Pressable
+          onPress={onCartPress}
           style={[
             styles.addBtn,
             inCart
@@ -96,13 +88,48 @@ function ProductCard({ product, style, onPress }) {
           >
             {inCart ? 'Remove' : 'Add to Cart'}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
-export default React.memo(ProductCard);
+const PureProductCard = React.memo(ProductCard);
+
+/**
+ * Connected wrapper — subscribes to Cart & Favourite contexts,
+ * computes boolean flags, and passes them to the memoized ProductCard.
+ * This wrapper re-renders on every cart change (cheap — no DOM),
+ * but ProductCard only re-renders when inCart/liked actually change for THIS product.
+ */
+export default function ProductCardConnected({ product, style, onPress }) {
+  const { addToCart, removeFromCart, isInCart } = useCart();
+  const { toggleFavourite, isFavourite } = useFavourites();
+
+  const inCart = isInCart(product.id);
+  const liked = isFavourite(product.id);
+
+  const onCartPress = useCallback(() => {
+    if (inCart) removeFromCart(product.id);
+    else addToCart(product);
+  }, [inCart, product, addToCart, removeFromCart]);
+
+  const onFavouritePress = useCallback(() => {
+    toggleFavourite(product);
+  }, [product, toggleFavourite]);
+
+  return (
+    <PureProductCard
+      product={product}
+      style={style}
+      onPress={onPress}
+      inCart={inCart}
+      liked={liked}
+      onCartPress={onCartPress}
+      onFavouritePress={onFavouritePress}
+    />
+  );
+}
 
 const styles = StyleSheet.create({
   card: {

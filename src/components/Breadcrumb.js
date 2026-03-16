@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
 import { SIZES } from '../constants/theme';
@@ -11,13 +12,13 @@ export default function Breadcrumb({ crumbs }) {
   if (!crumbs || crumbs.length === 0) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.headerBg, borderBottomColor: theme.border }]}>
+    <View style={styles.container}>
       {crumbs.map((crumb, index) => {
         const isLast = index === crumbs.length - 1;
         return (
           <React.Fragment key={index}>
             {index > 0 && (
-              <Text style={[styles.separator, { color: theme.textSecondary }]}>/</Text>
+              <Feather name="chevron-right" size={14} color={theme.textSecondary} style={styles.separator} />
             )}
             {isLast || !crumb.screen ? (
               <Text
@@ -50,18 +51,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SIZES.padding,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
+    paddingVertical: 12,
   },
   separator: {
-    fontSize: 13,
     marginHorizontal: 6,
   },
   linkCrumb: {
-    fontSize: 13,
+    fontSize: 15,
   },
   currentCrumb: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '600',
     flexShrink: 1,
   },

@@ -18,6 +18,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { Image as ExpoImage } from 'expo-image';
 import CachedImage from '../components/CachedImage';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -49,6 +50,27 @@ export default function HomeScreen({ navigation }) {
   const [query, setQuery] = useState('');
   const searchInputRef = useRef(null);
 
+  // Prefetch above-fold images when sections load
+  useEffect(() => {
+    if (!sections.length) return;
+    const urls = [];
+    for (const section of sections) {
+      if (!section || !Array.isArray(section.collections)) continue;
+      if (section.type === SECTION_TYPES.CATEGORY) {
+        section.collections.forEach((c) => { if (c.categoryurl) urls.push(c.categoryurl); });
+      } else if (section.type === SECTION_TYPES.PROMO) {
+        section.collections.forEach((p) => {
+          const u = p.promourl || p.imageurl || p.image || p.promoimage || p.producturl || p.pageval;
+          if (u && typeof u === 'string' && u.startsWith('http')) urls.push(u);
+        });
+      } else if (section.type === SECTION_TYPES.LIST) {
+        section.collections.slice(0, 6).forEach((p) => { if (p?.producturl) urls.push(p.producturl); });
+      }
+      if (urls.length >= 20) break;
+    }
+    if (urls.length > 0) ExpoImage.prefetch(urls);
+  }, [sections]);
+
   // Extract all products from list sections for local search
   const allProducts = useMemo(() => {
     const products = [];
@@ -56,13 +78,29 @@ export default function HomeScreen({ navigation }) {
       if (section?.type === SECTION_TYPES.LIST && Array.isArray(section.collections)) {
         section.collections.forEach((p, i) => {
           if (!p || typeof p !== 'object') return;
+          let weight = '';
+          let price = p.offerprice || p.productprice || 0;
+          let originalPrice = p.productprice || 0;
+          if (p.quantity) {
+            const firstEntry = p.quantity.split('|')[0]?.trim();
+            if (firstEntry) {
+              const parts = firstEntry.split('-');
+              weight = parts[0] || '';
+              const pp = parseFloat(parts[1]) || 0;
+              const op = parts[2] ? parseFloat(parts[2]) : null;
+              if (pp > 0) {
+                price = op || pp;
+                originalPrice = pp;
+              }
+            }
+          }
           products.push({
             id: `${sIdx}-${p.id || i}`,
             productId: p.id,
             name: p.productname || '',
-            weight: '',
-            price: p.offerprice || p.productprice || 0,
-            originalPrice: p.productprice || 0,
+            weight,
+            price,
+            originalPrice,
             image: p.producturl || '',
             category: p.productcategory || '',
             productcode: p.productcode || '',
@@ -197,20 +235,39 @@ export default function HomeScreen({ navigation }) {
 
         case SECTION_TYPES.LIST: {
           if (!safeCollections.length) return null;
-          const products = safeCollections.map((p, i) => ({
-            id: `${index}-${p?.id || i}`,
-            productId: p?.id,
-            name: p?.productname || '',
-            weight: '',
-            price: p?.offerprice || p?.productprice || 0,
-            originalPrice: p?.productprice || 0,
-            rating: 4.5,
-            reviews: 0,
-            image: p?.producturl || '',
-            category: p?.productcategory || '',
-            badge: null,
-            productcode: p?.productcode || '',
-          }));
+          const products = safeCollections.map((p, i) => {
+            let weight = '';
+            let price = p?.offerprice || p?.productprice || 0;
+            let originalPrice = p?.productprice || 0;
+            if (p?.quantity) {
+              const firstEntry = p.quantity.split('|')[0]?.trim();
+              if (firstEntry) {
+                const parts = firstEntry.split('-');
+                weight = parts[0] || '';
+                const pp = parseFloat(parts[1]) || 0;
+                const op = parts[2] ? parseFloat(parts[2]) : null;
+                if (pp > 0) {
+                  price = op || pp;
+                  originalPrice = pp;
+                }
+              }
+            }
+            return {
+              id: `${index}-${p?.id || i}`,
+              productId: p?.id,
+              name: p?.productname || '',
+              weight,
+              price,
+              originalPrice,
+              rating: 4.5,
+              reviews: 0,
+              image: p?.producturl || '',
+              category: p?.productcategory || '',
+              badge: null,
+              productcode: p?.productcode || '',
+              quantity: p?.quantity || '',
+            };
+          });
           return (
             <ProductSection
               key={`list-${index}`}

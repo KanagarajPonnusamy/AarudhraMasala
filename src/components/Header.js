@@ -9,7 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useCart } from '../context/CartContext';
 import { SIZES } from '../constants/theme';
 
-export default function Header({ navigation, onSearchPress, showBack }) {
+function Header({ navigation, onSearchPress, showBack }) {
   const { theme } = useTheme();
   const { cartCount } = useCart();
 
@@ -134,3 +134,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export default React.memo(Header);
