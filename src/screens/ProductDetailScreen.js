@@ -120,8 +120,10 @@ export default function ProductDetailScreen({ navigation, route }) {
         const data = await fetchProduct(productId);
         if (mounted) {
           setProduct(data);
-          const weights = data.quantity ? data.quantity.split('|').map((w) => w.trim()).filter(Boolean) : [];
-          if (weights.length > 0) setSelectedWeight(weights[0]);
+          if (data.quantity) {
+            const parts = data.quantity.split('|').map((w) => w.trim()).filter(Boolean);
+            if (parts.length > 0) setSelectedWeight(parts[0].split('-')[0]);
+          }
         }
       } catch (e) {
         console.warn('Fetch product failed:', e.message);
@@ -172,13 +174,34 @@ export default function ProductDetailScreen({ navigation, route }) {
     );
   }
 
-  const weightOptions = product.quantity ? product.quantity.split('|').map((w) => w.trim()).filter(Boolean) : [];
+  // Parse quantity: "weight-productprice-offerprice|..." format
+  const weightOptions = product.quantity
+    ? product.quantity.split('|').map((entry) => {
+        const parts = entry.trim().split('-');
+        const weight = parts[0] || '';
+        const productPrice = parseFloat(parts[1]) || 0;
+        const offerPrice = parts[2] ? parseFloat(parts[2]) : null;
+        return { weight, productPrice, offerPrice: offerPrice || null };
+      }).filter((w) => w.weight)
+    : [];
+
+  const selectedOption = weightOptions.find((w) => w.weight === selectedWeight) || null;
+  const hasParsedPrices = selectedOption && selectedOption.productPrice > 0;
+  const displayPrice = hasParsedPrices
+    ? (selectedOption.offerPrice || selectedOption.productPrice)
+    : (product.offerprice || product.productprice);
+  const displayOriginalPrice = hasParsedPrices
+    ? selectedOption.productPrice
+    : product.productprice;
+  const discount = displayOriginalPrice && displayPrice < displayOriginalPrice
+    ? Math.round(((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100)
+    : 0;
 
   const cartItem = {
     id: String(product.id),
     name: product.productname,
-    price: product.offerprice || product.productprice,
-    originalPrice: product.productprice,
+    price: displayPrice,
+    originalPrice: displayOriginalPrice,
     image: product.producturl,
     category: product.productcategory,
     productcode: product.productcode,
@@ -188,9 +211,6 @@ export default function ProductDetailScreen({ navigation, route }) {
 
   const inCart = isInCart(String(product.id));
   const liked = isFavourite(String(product.id));
-  const discount = product.offerprice && product.offerprice < product.productprice
-    ? Math.round(((product.productprice - product.offerprice) / product.productprice) * 100)
-    : 0;
 
   const imageSection = (
     <View style={[styles.imageContainer, { backgroundColor: theme.card }, isWide && styles.imageContainerWide]}>
@@ -250,17 +270,17 @@ export default function ProductDetailScreen({ navigation, route }) {
 
       <View style={[styles.priceRow, isWide && styles.priceRowWide]}>
         <Text style={[styles.price, { color: theme.primary }, isWide && styles.priceWide]}>
-          Rs. {product.offerprice || product.productprice}
+          Rs. {displayPrice}
         </Text>
         {discount > 0 && (
           <Text style={[styles.originalPrice, { color: theme.textSecondary }]}>
-            ₹{product.productprice}
+            ₹{displayOriginalPrice}
           </Text>
         )}
         {discount > 0 && (
           <View style={[styles.saveBadge, { backgroundColor: theme.accent + '20' }]}>
             <Text style={[styles.saveText, { color: theme.accent }]}>
-              Save ₹{product.productprice - product.offerprice}
+              Save ₹{displayOriginalPrice - displayPrice}
             </Text>
           </View>
         )}
@@ -272,11 +292,11 @@ export default function ProductDetailScreen({ navigation, route }) {
             Weight : {selectedWeight}
           </Text>
           <View style={[styles.weightRow, isWide && styles.weightRowWide]}>
-            {weightOptions.map((w) => {
-              const isSelected = w === selectedWeight;
+            {weightOptions.map((opt) => {
+              const isSelected = opt.weight === selectedWeight;
               return (
                 <TouchableOpacity
-                  key={w}
+                  key={opt.weight}
                   style={[
                     styles.weightChip,
                     {
@@ -284,7 +304,7 @@ export default function ProductDetailScreen({ navigation, route }) {
                       backgroundColor: isSelected ? theme.primary + '10' : 'transparent',
                     },
                   ]}
-                  onPress={() => setSelectedWeight(w)}
+                  onPress={() => setSelectedWeight(opt.weight)}
                 >
                   <Text
                     style={[
@@ -292,7 +312,7 @@ export default function ProductDetailScreen({ navigation, route }) {
                       { color: isSelected ? theme.primary : theme.textSecondary },
                     ]}
                   >
-                    {w}
+                    {opt.weight}
                   </Text>
                 </TouchableOpacity>
               );
