@@ -185,13 +185,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   brandName: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 36,
+    fontFamily: 'BabyBoho',
     letterSpacing: 0.5,
   },
   brandTag: {
-    fontSize: 9,
-    fontWeight: '600',
+    fontSize: 16,
+    fontFamily: 'BabyBoho',
     letterSpacing: 3,
     marginTop: -1,
   },

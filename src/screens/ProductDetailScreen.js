@@ -2,7 +2,7 @@
  * Created by: Kanagaraj P
  * Created on: 11-03-2026
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,14 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  Modal,
   Platform,
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import CachedImage from '../components/CachedImage';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../context/ThemeContext';
@@ -38,8 +41,77 @@ export default function ProductDetailScreen({ navigation, route }) {
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState(null);
-  const { width: screenWidth } = useWindowDimensions();
+  const [imageZoomVisible, setImageZoomVisible] = useState(false);
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const isWide = Platform.OS === 'web' && screenWidth >= WIDE_BREAKPOINT;
+
+  // Zoom gesture values
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
+
+  const resetZoom = useCallback(() => {
+    'worklet';
+    scale.value = withTiming(1);
+    savedScale.value = 1;
+    translateX.value = withTiming(0);
+    savedTranslateX.value = 0;
+    translateY.value = withTiming(0);
+    savedTranslateY.value = 0;
+  }, []);
+
+  const pinchGesture = Gesture.Pinch()
+    .onUpdate((e) => {
+      'worklet';
+      scale.value = Math.min(Math.max(savedScale.value * e.scale, 1), 5);
+    })
+    .onEnd(() => {
+      'worklet';
+      savedScale.value = scale.value;
+      if (scale.value <= 1) {
+        resetZoom();
+      }
+    });
+
+  const panGesture = Gesture.Pan()
+    .minPointers(1)
+    .onUpdate((e) => {
+      'worklet';
+      if (savedScale.value > 1) {
+        translateX.value = savedTranslateX.value + e.translationX;
+        translateY.value = savedTranslateY.value + e.translationY;
+      }
+    })
+    .onEnd(() => {
+      'worklet';
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    });
+
+  const doubleTapGesture = Gesture.Tap()
+    .numberOfTaps(2)
+    .onEnd(() => {
+      'worklet';
+      if (savedScale.value > 1) {
+        resetZoom();
+      } else {
+        scale.value = withTiming(3);
+        savedScale.value = 3;
+      }
+    });
+
+  const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture, doubleTapGesture);
+
+  const zoomAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
 
   useEffect(() => {
     let mounted = true;
@@ -128,7 +200,17 @@ export default function ProductDetailScreen({ navigation, route }) {
             <Text style={styles.discountText}>-{discount}%</Text>
           </View>
         )}
-        <CachedImage source={{ uri: product.producturl }} style={[styles.productImage, isWide && styles.productImageWide]} />
+        <TouchableOpacity activeOpacity={0.9} onPress={() => {
+          scale.value = 1;
+          savedScale.value = 1;
+          translateX.value = 0;
+          savedTranslateX.value = 0;
+          translateY.value = 0;
+          savedTranslateY.value = 0;
+          setImageZoomVisible(true);
+        }}>
+          <CachedImage source={{ uri: product.producturl }} style={[styles.productImage, isWide && styles.productImageWide]} />
+        </TouchableOpacity>
         {!isWide && (
           <TouchableOpacity
             style={[styles.wishlistBtn, { backgroundColor: liked ? theme.accent : theme.surface }]}
@@ -305,6 +387,33 @@ export default function ProductDetailScreen({ navigation, route }) {
           </>
         )}
       </ScrollView>
+
+      {/* Zoomable Image Modal */}
+      <Modal
+        visible={imageZoomVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImageZoomVisible(false)}
+      >
+        <GestureHandlerRootView style={styles.zoomOverlay}>
+          <TouchableOpacity
+            style={styles.zoomCloseBtn}
+            onPress={() => setImageZoomVisible(false)}
+          >
+            <Feather name="x" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <GestureDetector gesture={composedGesture}>
+            <Animated.View style={[styles.zoomImageContainer, zoomAnimatedStyle]}>
+              <CachedImage
+                source={{ uri: product.producturl }}
+                style={{ width: screenWidth, height: screenHeight * 0.7 }}
+                contentFit="contain"
+              />
+            </Animated.View>
+          </GestureDetector>
+          <Text style={styles.zoomHint}>Pinch to zoom | Double-tap to toggle</Text>
+        </GestureHandlerRootView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -349,7 +458,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   imageWrapper: {
-    width: '80%',
+    width: '50%',
     position: 'relative',
   },
   imageWrapperWide: {
@@ -560,5 +669,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
+  },
+  zoomOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zoomCloseBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomImageContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zoomHint: {
+    position: 'absolute',
+    bottom: 40,
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
   },
 });

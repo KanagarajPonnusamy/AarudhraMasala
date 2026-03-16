@@ -33,6 +33,7 @@ TextInput.render = function (props, ref) {
 export default function App() {
   const [fontsLoaded] = useFonts({
     Tahoma: require('./assets/Fonts/tahoma_regular_font.ttf'),
+    BabyBoho: require('./assets/Fonts/Baby Boho.otf'),
   });
 
   const onLayoutRootView = useCallback(async () => {
