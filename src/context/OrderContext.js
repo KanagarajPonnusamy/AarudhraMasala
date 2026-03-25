@@ -4,7 +4,7 @@
  */
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { placeOrderAPI, fetchOrdersAPI, sendOrderAlert } from '../services/api';
+import { placeOrderAPI, fetchOrdersAPI, updateOrderStatusAPI, sendOrderAlert } from '../services/api';
 import { useAuth } from './AuthContext';
 
 const ORDERS_KEY = '@orders';
@@ -51,10 +51,10 @@ export function OrderProvider({ children }) {
     CANCELLED: 'Cancelled',
   };
 
-  const fetchOrders = useCallback(async (userid) => {
+  const fetchOrders = useCallback(async (userid, usertype) => {
     try {
       setLoading(true);
-      const data = await fetchOrdersAPI(userid);
+      const data = await fetchOrdersAPI(userid, usertype || 'end-user');
       const list = Array.isArray(data) ? data : data?.orders || [];
       const transformed = list.map((entry) => {
         const o = entry.order || {};
@@ -82,6 +82,11 @@ export function OrderProvider({ children }) {
       setLoading(false);
     }
   }, []);
+
+  const updateOrderStatus = useCallback(async (orderid, userid, status, usertype) => {
+    await updateOrderStatusAPI(orderid, userid, status);
+    await fetchOrders(userid, usertype);
+  }, [fetchOrders]);
 
   const placeOrder = useCallback(async (orderData) => {
     // Send order to API
@@ -127,7 +132,7 @@ export function OrderProvider({ children }) {
   }, [orders]);
 
   return (
-    <OrderContext.Provider value={{ orders, loading, placeOrder, fetchOrders }}>
+    <OrderContext.Provider value={{ orders, loading, placeOrder, fetchOrders, updateOrderStatus }}>
       {children}
     </OrderContext.Provider>
   );

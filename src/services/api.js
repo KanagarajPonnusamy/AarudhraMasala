@@ -23,7 +23,8 @@ const ENDPOINTS = {
   FETCH_HOME_PRODUCTS: `/api/am/products/v1/fetchHomeProductsList/${APP_ID}`, // GET
   ADD_PRODUCT: `/api/am/products/v1/addProduct/${APP_ID}`, // POST
   PLACE_ORDER: `/api/am/orders/v1/orderProducts`, // POST /{userid}/{APP_ID}
-  FETCH_ORDERS: `/api/am/orders/v1/fetchOrders`, // GET /{userid}/{APP_ID}
+  FETCH_ORDERS: `/api/am/orders/v1/fetchOrderDetailsByUserType`, // GET /{userid}/{APP_ID}/{usertype}
+  UPDATE_ORDER_STATUS: `/api/am/orders/v1/updateShippingInfo`, // GET /{orderid}/{userid}/{APP_ID}/{status}
   FETCH_PRODUCTS_BY_CODE: `/api/am/products/v1/fetchProductsByCode/${APP_ID}`, // GET /{code}
   FETCH_BY_CATEGORY: `/api/am/products/v1/fetchByProductCategory/${APP_ID}`, // GET /{categoryname}
   FETCH_PRODUCT: `/api/am/products/v1/fetchProduct`, // GET /{id}/{APP_ID}
@@ -261,10 +262,18 @@ export function sendOrderAlert(userid, orderid) {
   }).catch(() => {});
 }
 
-export async function fetchOrdersAPI(userid) {
+export async function fetchOrdersAPI(userid, usertype) {
   await ensureAdminToken();
   const response = await api.get(
-    `${ENDPOINTS.FETCH_ORDERS}/${userid}/${APP_ID}`
+    `${ENDPOINTS.FETCH_ORDERS}/${userid}/${APP_ID}/${encodeURIComponent(usertype)}`
+  );
+  return response.data;
+}
+
+export async function updateOrderStatusAPI(orderid, userid, status) {
+  await ensureAdminToken();
+  const response = await api.get(
+    `${ENDPOINTS.UPDATE_ORDER_STATUS}/${orderid}/${userid}/${APP_ID}/${encodeURIComponent(status)}`
   );
   return response.data;
 }

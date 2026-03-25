@@ -22,6 +22,7 @@ import { SIZES } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
 import Header from '../components/Header';
 import Breadcrumb from '../components/Breadcrumb';
+import CustomDialog from '../components/CustomDialog';
 
 function formatDate(isoString) {
   if (!isoString) return '—';
@@ -135,9 +136,34 @@ function ShippingTracker({ status, theme }) {
 
 const MemoizedShippingTracker = React.memo(ShippingTracker);
 
-function OrderCard({ order, theme }) {
+const ADMIN_STATUSES = ['Confirmed', 'Shipped', 'Out for Delivery', 'Delivered'];
+
+function OrderCard({ order, theme, isSiteAdmin, user, onUpdateStatus }) {
+  const [updating, setUpdating] = useState(false);
+  const [dialog, setDialog] = useState({ visible: false, title: '', message: '', status: null, isCancel: false });
   const itemCount = order.orderdetails?.length || 0;
   const isCancelled = order.orderstatus === 'CANCELLED' || order.status === 'Cancelled';
+  const isDelivered = order.orderstatus === 'DELIVERED' || order.status === 'Delivered';
+
+  const closeDialog = () => setDialog((d) => ({ ...d, visible: false }));
+
+  const handleConfirm = async () => {
+    closeDialog();
+    setUpdating(true);
+    try {
+      await onUpdateStatus(order.id, user.user_id, dialog.status, user.usertype);
+    } catch (e) {
+      setDialog({
+        visible: true,
+        title: 'Error',
+        message: e.message || 'Failed to update status',
+        status: null,
+        isCancel: false,
+      });
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const subtotal = (order.orderdetails || []).reduce((sum, d) => {
     const price = parseFloat(d.productprice) || 0;
@@ -254,6 +280,85 @@ function OrderCard({ order, theme }) {
         </View>
       </View>
 
+      {/* Admin Status Actions */}
+      {isSiteAdmin && !isCancelled && !isDelivered && (
+        <View style={[styles.adminSection, { borderTopColor: theme.border }]}>
+          {updating ? (
+            <ActivityIndicator size="small" color={theme.primary} style={{ marginVertical: 8 }} />
+          ) : (
+            <>
+              <View style={styles.adminBtnRow}>
+                {ADMIN_STATUSES.map((s) => {
+                  const isCurrent =
+                    order.status?.toLowerCase() === s.toLowerCase() ||
+                    order.orderstatus?.toLowerCase() === s.toLowerCase() ||
+                    order.shippingstatus?.toLowerCase() === s.toLowerCase();
+                  return (
+                    <TouchableOpacity
+                      key={s}
+                      disabled={isCurrent}
+                      style={[
+                        styles.adminBtn,
+                        { borderColor: theme.primary },
+                        isCurrent && { opacity: 0.4 },
+                      ]}
+                      onPress={() =>
+                        setDialog({
+                          visible: true,
+                          title: 'Update Status',
+                          message: `Set order ${order.id} to "${s}"?`,
+                          status: s,
+                          isCancel: false,
+                        })
+                      }
+                    >
+                      <Text style={[styles.adminBtnText, { color: theme.primary }]}>
+                        {s}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <TouchableOpacity
+                style={[styles.cancelBtn, { borderColor: '#EF4444' }]}
+                onPress={() =>
+                  setDialog({
+                    visible: true,
+                    title: 'Cancel Order',
+                    message: `Are you sure you want to cancel order ${order.id}?`,
+                    status: 'Cancelled',
+                    isCancel: true,
+                  })
+                }
+              >
+                <Feather name="x-circle" size={14} color="#EF4444" />
+                <Text style={styles.cancelBtnText}>Cancel Order</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      )}
+
+      {/* Custom Dialog */}
+      <CustomDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        onDismiss={closeDialog}
+        buttons={
+          dialog.status
+            ? [
+                { text: dialog.isCancel ? 'No' : 'Cancel', style: 'cancel', onPress: closeDialog },
+                {
+                  text: dialog.isCancel ? 'Yes, Cancel' : 'Confirm',
+                  style: dialog.isCancel ? 'destructive' : undefined,
+                  onPress: handleConfirm,
+                },
+              ]
+            : [{ text: 'OK', onPress: closeDialog }]
+        }
+      />
+
       {/* Footer */}
       <View style={[styles.cardFooter, { borderTopColor: theme.border }]}>
         <Feather name="map-pin" size={14} color={theme.textSecondary} />
@@ -272,25 +377,37 @@ const MemoizedOrderCard = React.memo(OrderCard);
 
 export default function MyOrdersScreen({ navigation }) {
   const { theme } = useTheme();
-  const { orders, loading, fetchOrders } = useOrders();
+  const { orders, loading, fetchOrders, updateOrderStatus } = useOrders();
   const { user } = useAuth();
+  const isSiteAdmin = user?.usertype === 'site-admin';
 
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (user?.user_id) {
-      fetchOrders(user.user_id);
+      fetchOrders(user.user_id, user.usertype);
     }
   }, [user?.user_id]);
 
   const onRefresh = useCallback(async () => {
     if (!user?.user_id) return;
     setRefreshing(true);
-    await fetchOrders(user.user_id);
+    await fetchOrders(user.user_id, user.usertype);
     setRefreshing(false);
-  }, [user?.user_id, fetchOrders]);
+  }, [user?.user_id, user?.usertype, fetchOrders]);
 
-  const renderItem = useCallback(({ item }) => <MemoizedOrderCard order={item} theme={theme} />, [theme]);
+  const renderItem = useCallback(
+    ({ item }) => (
+      <MemoizedOrderCard
+        order={item}
+        theme={theme}
+        isSiteAdmin={isSiteAdmin}
+        user={user}
+        onUpdateStatus={updateOrderStatus}
+      />
+    ),
+    [theme, isSiteAdmin, user, updateOrderStatus]
+  );
 
   const renderEmpty = () => (
     <EmptyState
@@ -564,6 +681,42 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 18,
     fontWeight: '900',
+  },
+  adminSection: {
+    borderTopWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  adminBtnRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  adminBtn: {
+    borderWidth: 1.5,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  adminBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cancelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    gap: 6,
+  },
+  cancelBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#EF4444',
   },
   cardFooter: {
     flexDirection: 'row',
