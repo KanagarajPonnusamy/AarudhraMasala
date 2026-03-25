@@ -181,7 +181,7 @@ export async function logoutUser(email) {
 
 export async function registerUser(data) {
   await ensureAdminToken();
-  const response = await api.post(ENDPOINTS.REGISTER_USER, {
+  let json = {
     firstname: data.firstName,
     lastname: data.lastName,
     email: data.email,
@@ -189,7 +189,9 @@ export async function registerUser(data) {
     password: data.password,
     confirm_pwd: data.confirmPassword,
     usertype: 'end-user',
-  });
+  }
+  console.log('[API] Register payload:', JSON.stringify(json));
+  const response = await api.post(ENDPOINTS.REGISTER_USER, json);
   return response.data;
 }
 

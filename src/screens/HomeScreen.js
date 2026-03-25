@@ -244,7 +244,7 @@ export default function HomeScreen({ navigation }) {
               if (firstEntry) {
                 const parts = firstEntry.split('-');
                 weight = parts[0] || '';
-                const pp = parseFloat(parts[1]) || 0;
+                const pp = parseFloat(parts[1] || 0);
                 const op = parts[2] ? parseFloat(parts[2]) : null;
                 if (pp > 0) {
                   price = op || pp;

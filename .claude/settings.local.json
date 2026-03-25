@@ -57,7 +57,8 @@
       "Bash(node -e:*)",
       "Bash(xargs cat:*)",
       "Bash(echo:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhYXJ1ZGhyYV9wdWJsaWNfdG9rZW5fdXNlciIsImlhdCI6MTc3MzczNTgyOCwiZXhwIjoxNzc3MzM1ODI4fQ.EDYFLQZcCX7eejMPHBzZrqLh8YJFSOJ6b7_4l6uoFWI\":*)"
     ]
   }
 }
